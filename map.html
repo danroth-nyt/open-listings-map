@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Listings Map</title>
+    
+    <!-- Mapbox GL JS -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        .mapboxgl-popup-content {
+            padding: 15px;
+            min-width: 200px;
+        }
+        
+        .popup-address {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .popup-rent {
+            font-size: 16px;
+            color: #00796B;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .popup-source {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 1;
+            font-size: 14px;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 1;
+            font-size: 12px;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="loading" class="loading">Loading listings...</div>
+    
+    <div class="legend">
+        <div class="legend-title">Listing Status</div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #00E676;"></div>
+            <span>Addition</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #37474F;"></div>
+            <span>Other</span>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration - Replace these with your actual values
+        const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN';
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // Initialize Supabase client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Initialize Mapbox map
+        mapboxgl.accessToken = MAPBOX_TOKEN;
+        
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-73.9712, 40.7831], // New York City center
+            zoom: 11
+        });
+        
+        // Function to create popup content
+        function createPopupContent(properties) {
+            const address = properties.address || 'N/A';
+            const rent = properties.rent ? `$${properties.rent}` : 'N/A';
+            const source = properties.source || 'N/A';
+            
+            return `
+                <div class="popup-address">${address}</div>
+                <div class="popup-rent">${rent}</div>
+                <div class="popup-source">Source: ${source}</div>
+            `;
+        }
+        
+        // Function to determine point color based on status
+        function getPointColor(status) {
+            return status === 'addition' ? '#00E676' : '#37474F';
+        }
+        
+        // Fetch and display listings
+        async function loadListings() {
+            try {
+                // Fetch data from map_listings_geojson
+                const { data, error } = await supabase
+                    .from('map_listings_geojson')
+                    .select('*');
+                
+                if (error) {
+                    throw error;
+                }
+                
+                if (!data || data.length === 0) {
+                    console.warn('No listings found');
+                    document.getElementById('loading').textContent = 'No listings found';
+                    return;
+                }
+                
+                // Convert data to GeoJSON format
+                const geojson = {
+                    type: 'FeatureCollection',
+                    features: data.map(listing => ({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [listing.longitude, listing.latitude]
+                        },
+                        properties: {
+                            address: listing.address,
+                            rent: listing.rent,
+                            source: listing.source,
+                            status: listing.status,
+                            color: getPointColor(listing.status)
+                        }
+                    }))
+                };
+                
+                // Wait for map to load
+                map.on('load', () => {
+                    // Add source
+                    map.addSource('listings', {
+                        type: 'geojson',
+                        data: geojson
+                    });
+                    
+                    // Add circle layer for points
+                    map.addLayer({
+                        id: 'listings-points',
+                        type: 'circle',
+                        source: 'listings',
+                        paint: {
+                            'circle-radius': 6,
+                            'circle-color': ['get', 'color'],
+                            'circle-stroke-width': 2,
+                            'circle-stroke-color': '#ffffff',
+                            'circle-opacity': 0.8
+                        }
+                    });
+                    
+                    // Add click handler for popups
+                    map.on('click', 'listings-points', (e) => {
+                        const coordinates = e.features[0].geometry.coordinates.slice();
+                        const properties = e.features[0].properties;
+                        
+                        // Ensure popup appears over the point clicked
+                        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                        }
+                        
+                        new mapboxgl.Popup()
+                            .setLngLat(coordinates)
+                            .setHTML(createPopupContent(properties))
+                            .addTo(map);
+                    });
+                    
+                    // Change cursor on hover
+                    map.on('mouseenter', 'listings-points', () => {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    
+                    map.on('mouseleave', 'listings-points', () => {
+                        map.getCanvas().style.cursor = '';
+                    });
+                    
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    console.log(`Loaded ${data.length} listings`);
+                });
+                
+            } catch (error) {
+                console.error('Error loading listings:', error);
+                document.getElementById('loading').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        // Start loading listings
+        loadListings();
+    </script>
+</body>
+</html>
