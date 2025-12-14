@@ -146,7 +146,7 @@ def main():
     addresses = fetch_missing_addresses(conn)
     
     if not addresses:
-        print("✓ All active listings are already geocoded!")
+        print("[OK] All active listings are already geocoded!")
         conn.close()
         return
     
@@ -164,13 +164,13 @@ def main():
         if lat is not None and lng is not None:
             if insert_location(conn, address_key, lat, lng):
                 success_count += 1
-                print(f"  ✓ Cached: ({lat:.6f}, {lng:.6f})")
+                print(f"  [OK] Cached: ({lat:.6f}, {lng:.6f})")
             else:
                 fail_count += 1
-                print(f"  ✗ Failed to cache in database")
+                print(f"  [FAIL] Failed to cache in database")
         else:
             fail_count += 1
-            print(f"  ✗ Failed to geocode")
+            print(f"  [FAIL] Failed to geocode")
         
         # Rate limiting: sleep briefly between requests
         if i < len(addresses):
