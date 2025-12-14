@@ -42,7 +42,34 @@
             font-size: 16px;
             color: #00796B;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .popup-details {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .popup-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        
+        .status-addition {
+            background-color: #00E676;
+            color: #004D40;
+        }
+        
+        .status-existing {
+            background-color: #37474F;
+            color: #FFFFFF;
         }
         
         .popup-source {
@@ -102,19 +129,22 @@
         <div class="legend-title">Listing Status</div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #00E676;"></div>
-            <span>Addition</span>
+            <span>New Addition</span>
         </div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #37474F;"></div>
-            <span>Other</span>
+            <span>Existing Listing</span>
         </div>
     </div>
     
     <script>
-        // Configuration - Replace these with your actual values
+        // ============================================================
+        // CONFIGURATION - Replace these with your actual credentials
+        // ============================================================
         const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN';
         const SUPABASE_URL = 'YOUR_SUPABASE_URL';
         const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        // ============================================================
         
         // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -125,35 +155,40 @@
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/light-v11',
-            center: [-73.9712, 40.7831], // New York City center
-            zoom: 11
+            center: [-73.9654, 40.7829], // Manhattan, NYC
+            zoom: 12.5
         });
         
         // Function to create popup content
         function createPopupContent(properties) {
             const address = properties.address || 'N/A';
+            const unit = properties.unit ? ` #${properties.unit}` : '';
             const rent = properties.rent ? `$${properties.rent}` : 'N/A';
+            const bed = properties.bed || 'N/A';
+            const bath = properties.bath || 'N/A';
             const source = properties.source || 'N/A';
+            const status = properties.status || 'unknown';
+            const statusClass = status === 'addition' ? 'status-addition' : 'status-existing';
+            const statusLabel = status === 'addition' ? 'New Addition' : 'Existing';
             
             return `
-                <div class="popup-address">${address}</div>
+                <div class="popup-address">${address}${unit}</div>
+                <div class="popup-status ${statusClass}">${statusLabel}</div>
                 <div class="popup-rent">${rent}</div>
+                <div class="popup-details">
+                    <strong>Bed:</strong> ${bed} | <strong>Bath:</strong> ${bath}
+                </div>
                 <div class="popup-source">Source: ${source}</div>
             `;
-        }
-        
-        // Function to determine point color based on status
-        function getPointColor(status) {
-            return status === 'addition' ? '#00E676' : '#37474F';
         }
         
         // Fetch and display listings
         async function loadListings() {
             try {
-                // Fetch data from map_listings_geojson
+                // Fetch pre-formatted GeoJSON features from the view
                 const { data, error } = await supabaseClient
                     .from('map_listings_geojson')
-                    .select('*');
+                    .select('feature');
                 
                 if (error) {
                     throw error;
@@ -165,23 +200,10 @@
                     return;
                 }
                 
-                // Convert data to GeoJSON format
+                // Build GeoJSON FeatureCollection from pre-formatted features
                 const geojson = {
                     type: 'FeatureCollection',
-                    features: data.map(listing => ({
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [listing.longitude, listing.latitude]
-                        },
-                        properties: {
-                            address: listing.address,
-                            rent: listing.rent,
-                            source: listing.source,
-                            status: listing.status,
-                            color: getPointColor(listing.status)
-                        }
-                    }))
+                    features: data.map(row => row.feature)
                 };
                 
                 // Wait for map to load
@@ -192,15 +214,24 @@
                         data: geojson
                     });
                     
-                    // Add circle layer for points
+                    // Add circle layer for points with conditional styling
                     map.addLayer({
                         id: 'listings-points',
                         type: 'circle',
                         source: 'listings',
                         paint: {
-                            'circle-radius': 6,
-                            'circle-color': ['get', 'color'],
-                            'circle-stroke-width': 2,
+                            'circle-radius': [
+                                'interpolate', ['linear'], ['zoom'],
+                                12, 4,
+                                15, 8
+                            ],
+                            'circle-color': [
+                                'match',
+                                ['get', 'status'],
+                                'addition', '#00E676',  // Green for additions
+                                '#37474F'               // Dark grey for existing
+                            ],
+                            'circle-stroke-width': 1,
                             'circle-stroke-color': '#ffffff',
                             'circle-opacity': 0.8
                         }
