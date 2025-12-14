@@ -185,12 +185,18 @@
         // Fetch and display listings
         async function loadListings() {
             try {
+                console.log('Starting to fetch listings...');
+                
                 // Fetch pre-formatted GeoJSON features from the view
                 const { data, error } = await supabaseClient
                     .from('map_listings_geojson')
-                    .select('feature');
+                    .select('feature')
+                    .limit(1000);  // Limit to prevent timeout
+                
+                console.log('Fetch complete. Data:', data);
                 
                 if (error) {
+                    console.error('Supabase error:', error);
                     throw error;
                 }
                 
@@ -200,14 +206,21 @@
                     return;
                 }
                 
+                console.log(`Found ${data.length} listings`);
+                
                 // Build GeoJSON FeatureCollection from pre-formatted features
                 const geojson = {
                     type: 'FeatureCollection',
                     features: data.map(row => row.feature)
                 };
                 
-                // Wait for map to load
-                map.on('load', () => {
+                console.log('GeoJSON built:', geojson);
+                
+                // Function to add data to map
+                const addDataToMap = () => {
+                    console.log('Adding data to map...');
+                    
+                    try {
                     // Add source
                     map.addSource('listings', {
                         type: 'geojson',
@@ -262,11 +275,24 @@
                         map.getCanvas().style.cursor = '';
                     });
                     
-                    // Hide loading indicator
-                    document.getElementById('loading').style.display = 'none';
-                    
-                    console.log(`Loaded ${data.length} listings`);
-                });
+                        // Hide loading indicator
+                        document.getElementById('loading').style.display = 'none';
+                        
+                        console.log(`Successfully loaded ${data.length} listings on map`);
+                    } catch (err) {
+                        console.error('Error adding data to map:', err);
+                        document.getElementById('loading').textContent = `Error rendering map: ${err.message}`;
+                    }
+                };
+                
+                // Check if map is already loaded, otherwise wait for it
+                if (map.loaded()) {
+                    console.log('Map already loaded, adding data immediately');
+                    addDataToMap();
+                } else {
+                    console.log('Waiting for map to load...');
+                    map.on('load', addDataToMap);
+                }
                 
             } catch (error) {
                 console.error('Error loading listings:', error);
