@@ -40,10 +40,10 @@ Must include columns:
 - `source_name` (TEXT)
 - `address` (TEXT)
 - `unit_number` (TEXT)
-- `ask_rent` (NUMERIC)
-- `bed` (TEXT/NUMERIC)
-- `bath` (TEXT/NUMERIC)
-- `filename_date` (DATE) - Used for ranking
+- `rent_price` (TEXT/NUMERIC) - The rent amount
+- `bedrooms` (TEXT/NUMERIC) - Number of bedrooms
+- `bathrooms` (TEXT/NUMERIC) - Number of bathrooms
+- `filename_date` (DATE) - Used for ranking (CRITICAL for Rank 1 vs Rank 2 logic)
 
 #### 2. Cache Table: `public.locations_cache`
 ```sql
@@ -55,8 +55,67 @@ CREATE TABLE public.locations_cache (
 );
 ```
 
-#### 3. Smart View: `marts.map_listings_geojson`
-This view performs the Rank 1 vs Rank 2 comparison and outputs GeoJSON. See the plan documentation or Supabase SQL editor for the full SQL definition. The view must return a `feature` column containing pre-formatted GeoJSON Feature objects.
+#### 3. Smart View: `public.map_listings_geojson`
+**IMPORTANT**: This view MUST be created in the `public` schema (not `marts`) for the Supabase REST API to expose it.
+
+This view performs the Rank 1 vs Rank 2 comparison and outputs GeoJSON. The view must return a `feature` column containing pre-formatted GeoJSON Feature objects.
+
+**Create with this SQL:**
+```sql
+CREATE OR REPLACE VIEW public.map_listings_geojson AS
+WITH ranked_listings AS (
+    SELECT
+        v.source_name,
+        v.address,
+        v.unit_number,
+        v.rent_price,
+        v.bedrooms,
+        v.bathrooms,
+        DENSE_RANK() OVER(PARTITION BY v.source_name ORDER BY v.filename_date DESC) as date_rank
+    FROM marts.unified_listings_vw v
+),
+latest_records AS (
+    SELECT * FROM ranked_listings WHERE date_rank = 1
+),
+previous_records AS (
+    SELECT * FROM ranked_listings WHERE date_rank = 2
+)
+SELECT
+    l.source_name,
+    l.address,
+    l.unit_number,
+    CASE 
+        WHEN p.address IS NULL THEN 'addition'
+        ELSE 'existing'
+    END as status,
+    jsonb_build_object(
+        'type', 'Feature',
+        'geometry', jsonb_build_object(
+            'type', 'Point',
+            'coordinates', jsonb_build_array(loc.longitude, loc.latitude)
+        ),
+        'properties', jsonb_build_object(
+            'address', l.address,
+            'unit', l.unit_number,
+            'rent', l.rent_price,
+            'bed', l.bedrooms,
+            'bath', l.bathrooms,
+            'source', l.source_name,
+            'status', CASE WHEN p.address IS NULL THEN 'addition' ELSE 'existing' END
+        )
+    ) as feature
+FROM latest_records l
+LEFT JOIN previous_records p 
+    ON l.source_name = p.source_name 
+    AND l.address = p.address 
+    AND l.unit_number = p.unit_number
+INNER JOIN public.locations_cache loc 
+    ON UPPER(TRIM(l.address)) = loc.address_key;
+
+-- Grant access for public viewing
+GRANT SELECT ON public.map_listings_geojson TO anon;
+GRANT SELECT ON public.map_listings_geojson TO authenticated;
+```
 
 ## Setup
 
@@ -109,7 +168,28 @@ const SUPABASE_ANON_KEY = 'eyJhbGc...'; // Your Supabase anonymous key
 
 ### 5. Set Up Supabase Database
 
-Execute the SQL to create the required cache table and smart view in your Supabase SQL Editor. The view must implement the Rank 1 vs Rank 2 logic as described in the architecture section.
+#### Create the Cache Table
+
+Run this in Supabase SQL Editor:
+
+```sql
+CREATE TABLE IF NOT EXISTS public.locations_cache (
+    address_key TEXT PRIMARY KEY,
+    latitude FLOAT,
+    longitude FLOAT,
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+-- Disable RLS or create a read policy
+ALTER TABLE public.locations_cache DISABLE ROW LEVEL SECURITY;
+```
+
+#### Create the Smart View
+
+See the SQL in the "Required Supabase Database Structure" section above. Make sure to:
+1. Create it in the `public` schema (not `marts`)
+2. Match the column names from your `marts.unified_listings_vw`
+3. Grant SELECT access to `anon` and `authenticated` roles
 
 ## Usage
 
@@ -163,19 +243,26 @@ Open `map.html` in any web browser. The map will:
 
 The "intelligence" of this system comes from SQL, not code:
 
-1. **Ranking**: The view `marts.map_listings_geojson` uses `DENSE_RANK()` to partition listings by `source_name` and order by `filename_date DESC`
-   - Rank 1 = Latest batch
-   - Rank 2 = Previous batch
+1. **Ranking**: The view `public.map_listings_geojson` uses `DENSE_RANK()` to partition listings by `source_name` and order by `filename_date DESC`
+   - Rank 1 = Latest batch (most recent filename_date per source)
+   - Rank 2 = Previous batch (second most recent filename_date per source)
    
 2. **Comparison**: A `LEFT JOIN` from Rank 1 to Rank 2 on `(source_name, address, unit_number)` reveals:
-   - If the join finds a match → `status = 'existing'`
-   - If the join returns NULL → `status = 'addition'` (new!)
+   - If the join finds a match → `status = 'existing'` (listing appears in both batches)
+   - If the join returns NULL → `status = 'addition'` (new listing in latest batch only)
 
-3. **Output**: The view produces GeoJSON features with the `status` property already computed
+3. **Geocoding**: Only listings with cached coordinates are included via `INNER JOIN` with `public.locations_cache`
+   - Run the Python geocoding script first to populate the cache
+   - The script automatically geocodes Rank 1 listings missing from cache
 
-4. **Display**: The map simply reads `status` and applies colors:
-   - `addition` → Green
-   - `existing` → Grey
+4. **Output**: The view produces GeoJSON features with:
+   - Coordinates from the cache
+   - Status computed from the comparison
+   - All listing details in the properties object
+
+5. **Display**: The map simply reads `status` and applies colors:
+   - `addition` → Green (#00E676)
+   - `existing` → Dark Grey (#37474F)
 
 ## Address Normalization
 
@@ -223,6 +310,26 @@ The `locations_cache` table uses `address_key` as the primary key, storing the n
 - The view must compute `status` correctly in the GeoJSON properties
 - Verify the Rank 1 vs Rank 2 LEFT JOIN logic in the SQL view
 
+**"Failed to load resource: net::ERR_NAME_NOT_RESOLVED"**
+- Double-check your Supabase URL in map.html is correct
+- The URL should match your project URL exactly from the Supabase dashboard
+
+**View not accessible via REST API**
+- The view MUST be in the `public` schema, not `marts` or any other schema
+- Supabase REST API only exposes tables/views in the `public` schema by default
+- Recreate the view in public: `CREATE OR REPLACE VIEW public.map_listings_geojson AS ...`
+
+**Column does not exist errors when creating view**
+- Check your actual column names: `SELECT column_name FROM information_schema.columns WHERE table_name = 'unified_listings_vw'`
+- Common differences: `rent_price` vs `ask_rent`, `bedrooms` vs `bed`, `bathrooms` vs `bath`
+- Update the view SQL to match your exact column names
+
+**Map hangs on "Loading listings..."**
+- Check browser console (F12) for JavaScript errors
+- Verify the view returns data: `SELECT COUNT(*) FROM public.map_listings_geojson;`
+- If count is 0, check that addresses in cache match addresses in listings (case-sensitive, whitespace matters)
+- Use address normalization: `UPPER(TRIM(address))`
+
 ## GitHub Actions Monitoring
 
 View workflow runs:
@@ -243,6 +350,62 @@ open-listings-map/
 ├── requirements.txt              # Python dependencies
 └── README.md                     # This file
 ```
+
+## Testing Your Setup
+
+### 1. Test Geocoding Script
+
+```bash
+python geocode_listings.py
+```
+
+Should output:
+- Number of addresses found to geocode
+- Progress for each address
+- Success/failure summary
+
+### 2. Verify Data in Supabase
+
+```sql
+-- Check cache has data
+SELECT COUNT(*) FROM public.locations_cache;
+
+-- Check view returns data
+SELECT COUNT(*) FROM public.map_listings_geojson;
+
+-- Sample the view output
+SELECT 
+    address, 
+    status, 
+    feature->>'type' as feature_type 
+FROM public.map_listings_geojson 
+LIMIT 5;
+```
+
+### 3. Test the Map
+
+1. Open `map.html` in browser
+2. Open DevTools (F12) → Console tab
+3. Should see:
+   - "Starting to fetch listings..."
+   - "Found X listings"
+   - "Successfully loaded X listings on map"
+4. Map should display dots in Manhattan/NYC area
+5. Click dots to see popups with listing details
+
+## Common Setup Issues
+
+**Column name mismatches**: Your `unified_listings_vw` might have different column names. Always check with:
+```sql
+SELECT column_name FROM information_schema.columns 
+WHERE table_schema = 'marts' AND table_name = 'unified_listings_vw';
+```
+
+**Schema issues**: The REST API view must be in `public` schema. Views in other schemas won't be accessible.
+
+**Address matching**: Geocoded addresses must match exactly (after normalization). Both the Python script and SQL view use `UPPER(TRIM(address))`.
+
+**RLS policies**: If the view returns empty data via API but has data in SQL Editor, check Row Level Security policies on `locations_cache` and the view itself.
 
 ## Contributing
 
