@@ -117,7 +117,7 @@
         const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         
         // Initialize Supabase client
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // Initialize Mapbox map
         mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -151,7 +151,7 @@
         async function loadListings() {
             try {
                 // Fetch data from map_listings_geojson
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('map_listings_geojson')
                     .select('*');
                 
