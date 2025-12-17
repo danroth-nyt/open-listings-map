@@ -48,7 +48,7 @@ All security features have been successfully implemented for the Open Listings M
 ### Step 1: Enable Database Security (REQUIRED)
 1. Open [Supabase Dashboard](https://supabase.com/dashboard)
 2. Navigate to SQL Editor
-3. Copy contents of `supabase_security_policies.sql`
+3. Copy contents of [`sql/supabase_security_policies.sql`](../sql/supabase_security_policies.sql)
 4. Paste and run in SQL Editor
 5. Verify success (should see policy created)
 
@@ -68,7 +68,7 @@ All security features have been successfully implemented for the Open Listings M
 2. Try logging in with your test account
 3. Verify map loads and displays data
 4. Test logout button
-5. Follow `TESTING_GUIDE.md` for comprehensive testing
+5. Follow [`TESTING_GUIDE.md`](TESTING_GUIDE.md) for comprehensive testing
 
 **Estimated Time**: 15-30 minutes
 
@@ -87,10 +87,10 @@ All security features have been successfully implemented for the Open Listings M
 
 ### New Files Created
 ```
-supabase_security_policies.sql      - SQL to enable RLS
-SUPABASE_SETUP_GUIDE.md            - Manual setup instructions
-TESTING_GUIDE.md                   - Testing procedures
-IMPLEMENTATION_SUMMARY.md          - This summary
+sql/supabase_security_policies.sql      - SQL to enable RLS
+docs/SUPABASE_SETUP_GUIDE.md            - Manual setup instructions
+docs/TESTING_GUIDE.md                   - Testing procedures
+docs/IMPLEMENTATION_SUMMARY.md          - This summary
 ```
 
 ### Files Modified
@@ -208,10 +208,10 @@ Auto-logout → Redirect to login
 
 ## Quick Reference Links
 
-- **Setup Guide**: `SUPABASE_SETUP_GUIDE.md`
-- **Testing Guide**: `TESTING_GUIDE.md`
-- **SQL Script**: `supabase_security_policies.sql`
-- **Main README**: `README.md` (see Security & Authentication section)
+- **Setup Guide**: [`SUPABASE_SETUP_GUIDE.md`](SUPABASE_SETUP_GUIDE.md)
+- **Testing Guide**: [`TESTING_GUIDE.md`](TESTING_GUIDE.md)
+- **SQL Script**: [`../sql/supabase_security_policies.sql`](../sql/supabase_security_policies.sql)
+- **Main README**: [`../README.md`](../README.md) (see Security & Authentication section)
 
 ---
 
@@ -310,7 +310,7 @@ Your implementation is complete when:
 
 Before going live:
 
-- [ ] Run `supabase_security_policies.sql` in production Supabase project
+- [ ] Run [`sql/supabase_security_policies.sql`](../sql/supabase_security_policies.sql) in production Supabase project
 - [ ] Create real user accounts (not test accounts)
 - [ ] Test login flow from production URL
 - [ ] Verify RLS policies are active

@@ -13,7 +13,7 @@ This guide walks you through the manual steps required to secure your Open Listi
    - Click **New query**
 
 3. **Run Security Policies**
-   - Copy the entire contents of `supabase_security_policies.sql`
+   - Copy the entire contents of [`../sql/supabase_security_policies.sql`](../sql/supabase_security_policies.sql)
    - Paste into the SQL Editor
    - Click **Run** (or press Ctrl+Enter)
 

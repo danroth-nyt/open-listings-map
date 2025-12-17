@@ -46,7 +46,7 @@ This application uses **Supabase Authentication** with **Row Level Security (RLS
 **Prerequisites**: Complete these manual steps in your Supabase Dashboard before deploying:
 
 1. **Enable Row Level Security**:
-   - Run the SQL in `supabase_security_policies.sql` using the Supabase SQL Editor
+   - Run the SQL in [`sql/supabase_security_policies.sql`](sql/supabase_security_policies.sql) using the Supabase SQL Editor
    - This locks down `locations_cache` and `map_listings_geojson` to authenticated users only
 
 2. **Create User Accounts**:
@@ -55,7 +55,7 @@ This application uses **Supabase Authentication** with **Row Level Security (RLS
    - Share credentials securely (password manager, Signal, etc.)
    - **No public sign-up form** = no unauthorized access
 
-See `SUPABASE_SETUP_GUIDE.md` for detailed step-by-step instructions.
+See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed step-by-step instructions.
 
 ### Security Benefits
 
@@ -68,8 +68,8 @@ See `SUPABASE_SETUP_GUIDE.md` for detailed step-by-step instructions.
 
 ### Files Added for Security
 
-- `supabase_security_policies.sql` - SQL script to enable RLS and create policies
-- `SUPABASE_SETUP_GUIDE.md` - Step-by-step manual setup instructions
+- [`sql/supabase_security_policies.sql`](sql/supabase_security_policies.sql) - SQL script to enable RLS and create policies
+- [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) - Step-by-step manual setup instructions
 - `index.html` - Now serves as the login page with Supabase Auth integration
 - `map.html` - Protected with auth guard, session timeout, and logout button
 
@@ -236,11 +236,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGc...'; // Your Supabase anonymous key
 
 ### 5. Set Up Supabase Security & Database
 
-**IMPORTANT**: Complete security setup before proceeding. See `SUPABASE_SETUP_GUIDE.md` for detailed instructions.
+**IMPORTANT**: Complete security setup before proceeding. See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed instructions.
 
 #### Enable Authentication & Row Level Security
 
-Run the SQL in `supabase_security_policies.sql` via Supabase SQL Editor to:
+Run the SQL in [`sql/supabase_security_policies.sql`](sql/supabase_security_policies.sql) via Supabase SQL Editor to:
 - Enable RLS on `locations_cache` table
 - Create authentication policies
 - Revoke anonymous access
@@ -376,7 +376,7 @@ The `locations_cache` table uses `address_key` as the primary key, storing the n
 - Verify Supabase URL and Anon Key are correct in both `index.html` and `map.html`
 
 **"Map shows no data after logging in"**
-- RLS policies might be blocking authenticated users
+- RLS policies might be blocking authenticated users (run [`sql/supabase_security_policies.sql`](sql/supabase_security_policies.sql))
 - Run in Supabase SQL Editor: `SELECT COUNT(*) FROM public.locations_cache;`
 - Verify the policy grants SELECT to `authenticated` role
 - Check the policy was created: `SELECT * FROM pg_policies WHERE tablename = 'locations_cache';`
@@ -456,11 +456,15 @@ open-listings-map/
 ├── .github/
 │   └── workflows/
 │       └── geocode-listings.yml       # Automated daily geocoding
+├── docs/                              # Documentation
+│   ├── IMPLEMENTATION_SUMMARY.md      # Quick reference guide
+│   ├── SUPABASE_SETUP_GUIDE.md        # Manual setup instructions
+│   └── TESTING_GUIDE.md               # Testing procedures
+├── sql/                               # Database scripts
+│   └── supabase_security_policies.sql # RLS policies for database security
 ├── geocode_listings.py                # Python geocoding script
 ├── index.html                         # Login page with Supabase Auth
 ├── map.html                           # Protected interactive Mapbox map
-├── supabase_security_policies.sql     # RLS policies for database security
-├── SUPABASE_SETUP_GUIDE.md            # Manual setup instructions
 ├── requirements.txt                   # Python dependencies
 └── README.md                          # This file
 ```
