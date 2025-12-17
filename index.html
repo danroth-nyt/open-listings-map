@@ -246,6 +246,9 @@
     </div>
     
     <script>
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:248',message:'Script execution started',data:{windowSupabase:typeof window.supabase},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         // ============================================================
         // CONFIGURATION
         // ============================================================
@@ -253,7 +256,12 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_MljOvYoCOaTZATg7pTQDZg_uZWZyxy2';
         
         // Initialize Supabase client
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:256',message:'Before Supabase client creation',data:{url:SUPABASE_URL,keyLength:SUPABASE_ANON_KEY.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:260',message:'After Supabase client creation',data:{supabaseCreated:!!supabaseClient,supabaseType:typeof supabaseClient},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C'})}).catch(()=>{});
         
         // DOM elements
         const loginForm = document.getElementById('login-form');
@@ -264,14 +272,23 @@
         const errorMessage = document.getElementById('error-message');
         const loadingSpinner = document.getElementById('loading-spinner');
         
+        // #endregion
         // ============================================================
         // Check if user is already logged in on page load
         // ============================================================
         async function checkExistingSession() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:270',message:'checkExistingSession called',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
             loadingSpinner.classList.add('show');
             
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:277',message:'Before getSession call',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:281',message:'After getSession call',data:{hasSession:!!session,hasError:!!error,errorMsg:error?.message},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
                 
                 if (error) {
                     console.error('Session check error:', error);
@@ -279,16 +296,26 @@
                     return;
                 }
                 
+                // #endregion
                 if (session) {
                     // User is already logged in, redirect to map
                     console.log('Existing session found, redirecting to map...');
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:293',message:'Redirecting to map due to existing session',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+                    // #endregion
                     window.location.href = 'map.html';
                 } else {
                     // No session, show login form
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:299',message:'No session - showing login form',data:{loadingSpinnerHidden:true},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+                    // #endregion
                     loadingSpinner.classList.remove('show');
                 }
             } catch (error) {
                 console.error('Error checking session:', error);
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:306',message:'Exception in checkExistingSession',data:{errorMsg:error.message,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion
                 loadingSpinner.classList.remove('show');
             }
         }
@@ -297,6 +324,9 @@
         // Handle login form submission
         // ============================================================
         async function handleLogin(event) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:316',message:'handleLogin CALLED',data:{eventType:event?.type,eventTarget:event?.target?.id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A,B'})}).catch(()=>{});
+            // #endregion
             event.preventDefault();
             
             // Clear previous errors
@@ -307,6 +337,8 @@
             const email = emailInput.value.trim();
             const password = passwordInput.value;
             const rememberMe = rememberMeCheckbox.checked;
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:329',message:'Form values extracted',data:{emailLength:email.length,passwordLength:password.length,rememberMe:rememberMe},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B'})}).catch(()=>{});
             
             // Validate inputs
             if (!email || !password) {
@@ -314,13 +346,17 @@
                 return;
             }
             
+            // #endregion
             // Disable button and show loading state
             loginButton.disabled = true;
             loginButton.textContent = 'Signing in...';
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:343',message:'Before signInWithPassword',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{});
+            // #endregion
             
             try {
                 // Attempt to sign in with Supabase Auth
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: password,
                     options: {
@@ -329,6 +365,8 @@
                         persistSession: rememberMe
                     }
                 });
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:358',message:'After signInWithPassword',data:{hasData:!!data,hasError:!!error,errorMsg:error?.message,hasSession:!!data?.session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'B,E'})}).catch(()=>{});
                 
                 if (error) {
                     // Login failed
@@ -382,19 +420,35 @@
             }, 5000);
         }
         
+        // #endregion
         // ============================================================
         // Event listeners
         // ============================================================
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:408',message:'Before attaching event listeners',data:{loginFormExists:!!loginForm,passwordInputExists:!!passwordInput},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         loginForm.addEventListener('submit', handleLogin);
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:413',message:'Submit listener attached',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         
         // Allow Enter key to submit from password field
         passwordInput.addEventListener('keypress', (e) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:419',message:'Keypress on password field',data:{key:e.key},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
             if (e.key === 'Enter') {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:424',message:'Enter key detected - calling handleLogin',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 handleLogin(e);
             }
         });
         
         // Check for existing session on page load
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/4f739913-bac9-450a-98c1-6684b839cedf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:433',message:'About to call checkExistingSession',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         checkExistingSession();
     </script>
 </body>
