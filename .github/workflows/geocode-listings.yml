@@ -1,0 +1,57 @@
+name: Geocode Listings
+
+on:
+  # Run daily at 6:20 PM NY Time (23:20 UTC during EST, 22:20 UTC during EDT)
+  # Using 23:20 UTC for winter/EST timezone
+  schedule:
+    - cron: '20 23 * * *'
+  
+  # Allow manual triggering from GitHub Actions UI
+  workflow_dispatch:
+  
+  # Optional: Run on push to main for testing
+  push:
+    branches:
+      - main
+    paths:
+      - 'geocode_listings.py'
+      - '.github/workflows/geocode-listings.yml'
+
+jobs:
+  geocode:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run geocoding script
+        env:
+          SUPABASE_URI: ${{ secrets.SUPABASE_URI }}
+          GMAPS_KEY: ${{ secrets.GMAPS_KEY }}
+        run: |
+          python geocode_listings.py
+      
+      - name: Report completion
+        if: success()
+        run: |
+          echo "✓ Geocoding completed successfully"
+          echo "Check the logs above for details on addresses processed"
+      
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "✗ Geocoding failed"
+          echo "Check the logs above for error details"
+          exit 1
+
