@@ -135,6 +135,22 @@
             <div class="legend-color" style="background-color: #37474F;"></div>
             <span>Existing Listing</span>
         </div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <button id="logout-button" onclick="handleLogout()" style="
+                width: 100%;
+                padding: 8px 12px;
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            ">
+                Logout
+            </button>
+        </div>
     </div>
     
     <script>
@@ -144,11 +160,155 @@
         const MAPBOX_TOKEN = 'pk.eyJ1IjoicmRhbjY4OSIsImEiOiJjbWo2MXlwbDMwN3lxM2VvbWt3ODdxamZtIn0.4-xgJ_cFt_nhrMcBG6Jh3g';
         const SUPABASE_URL = 'https://wiufnhadffqkfeiydjzj.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_MljOvYoCOaTZATg7pTQDZg_uZWZyxy2';
+        
+        // Session timeout configuration (30 minutes in milliseconds)
+        const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+        const TIMEOUT_WARNING_MS = 2 * 60 * 1000; // Warn 2 minutes before timeout
         // ============================================================
         
         // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
+        // Session management variables
+        let sessionTimeoutId = null;
+        let warningTimeoutId = null;
+        let lastActivityTime = Date.now();
+        
+        // ============================================================
+        // AUTHENTICATION GUARD - Check session before loading map
+        // ============================================================
+        async function checkAuthentication() {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) {
+                    console.error('Session check error:', error);
+                    redirectToLogin();
+                    return false;
+                }
+                
+                if (!session) {
+                    console.log('No active session found, redirecting to login...');
+                    redirectToLogin();
+                    return false;
+                }
+                
+                console.log('User authenticated:', session.user.email);
+                return true;
+            } catch (error) {
+                console.error('Authentication check failed:', error);
+                redirectToLogin();
+                return false;
+            }
+        }
+        
+        // ============================================================
+        // REDIRECT TO LOGIN PAGE
+        // ============================================================
+        function redirectToLogin() {
+            window.location.href = 'index.html';
+        }
+        
+        // ============================================================
+        // LOGOUT HANDLER
+        // ============================================================
+        async function handleLogout() {
+            try {
+                // Clear session timeouts
+                clearTimeout(sessionTimeoutId);
+                clearTimeout(warningTimeoutId);
+                
+                // Sign out from Supabase
+                const { error } = await supabaseClient.auth.signOut();
+                
+                if (error) {
+                    console.error('Logout error:', error);
+                    // Still redirect even if there's an error
+                }
+                
+                console.log('User logged out successfully');
+                redirectToLogin();
+            } catch (error) {
+                console.error('Unexpected error during logout:', error);
+                // Force redirect anyway
+                redirectToLogin();
+            }
+        }
+        
+        // ============================================================
+        // SESSION TIMEOUT MANAGEMENT
+        // ============================================================
+        function resetSessionTimeout() {
+            lastActivityTime = Date.now();
+            
+            // Clear existing timeouts
+            clearTimeout(sessionTimeoutId);
+            clearTimeout(warningTimeoutId);
+            
+            // Set warning timeout (warn before actual logout)
+            warningTimeoutId = setTimeout(() => {
+                showTimeoutWarning();
+            }, SESSION_TIMEOUT_MS - TIMEOUT_WARNING_MS);
+            
+            // Set actual logout timeout
+            sessionTimeoutId = setTimeout(() => {
+                handleInactivityLogout();
+            }, SESSION_TIMEOUT_MS);
+        }
+        
+        function showTimeoutWarning() {
+            const remainingMinutes = Math.floor(TIMEOUT_WARNING_MS / 60000);
+            const warning = confirm(
+                `Your session will expire in ${remainingMinutes} minutes due to inactivity.\n\n` +
+                `Click OK to stay logged in, or Cancel to logout now.`
+            );
+            
+            if (warning) {
+                // User wants to stay - reset the timeout
+                resetSessionTimeout();
+            } else {
+                // User chose to logout
+                handleLogout();
+            }
+        }
+        
+        async function handleInactivityLogout() {
+            alert('Your session has expired due to inactivity. You will be redirected to the login page.');
+            await handleLogout();
+        }
+        
+        // Track user activity to reset timeout
+        function setupActivityListeners() {
+            const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            
+            events.forEach(event => {
+                document.addEventListener(event, () => {
+                    const timeSinceLastActivity = Date.now() - lastActivityTime;
+                    // Only reset if more than 1 minute has passed (avoid excessive resets)
+                    if (timeSinceLastActivity > 60000) {
+                        resetSessionTimeout();
+                    }
+                }, { passive: true });
+            });
+        }
+        
+        // ============================================================
+        // AUTH STATE CHANGE LISTENER
+        // ============================================================
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event, session?.user?.email);
+            
+            if (event === 'SIGNED_OUT') {
+                redirectToLogin();
+            } else if (event === 'TOKEN_REFRESHED') {
+                console.log('Token refreshed successfully');
+                resetSessionTimeout();
+            } else if (event === 'USER_UPDATED') {
+                console.log('User updated');
+            }
+        });
+        
+        // ============================================================
         // Initialize Mapbox map
         mapboxgl.accessToken = MAPBOX_TOKEN;
         
@@ -300,8 +460,33 @@
             }
         }
         
-        // Start loading listings
-        loadListings();
+        // ============================================================
+        // MAIN INITIALIZATION - Only run after authentication check
+        // ============================================================
+        async function initializeApp() {
+            // Check authentication first
+            const isAuthenticated = await checkAuthentication();
+            
+            if (!isAuthenticated) {
+                // User will be redirected to login, stop here
+                return;
+            }
+            
+            // User is authenticated, proceed with map initialization
+            console.log('Authentication verified, initializing map...');
+            
+            // Setup activity listeners for session timeout
+            setupActivityListeners();
+            
+            // Start the session timeout
+            resetSessionTimeout();
+            
+            // Load the map data
+            loadListings();
+        }
+        
+        // Start the application
+        initializeApp();
     </script>
 </body>
 </html>

@@ -16,6 +16,63 @@ Make.com → Supabase DB → Python Geocoder → Google Maps API
 
 **Key Design Principle**: All "addition" detection logic lives in the SQL VIEW (`marts.map_listings_geojson`), not in application code. The map simply displays pre-computed results.
 
+## Security & Authentication
+
+This application uses **Supabase Authentication** with **Row Level Security (RLS)** to protect sensitive listing data. No separate backend server is required - all security is enforced at the database level.
+
+### How It Works
+
+1. **Database-Level Security**: Row Level Security (RLS) policies prevent unauthorized data access
+   - Anonymous users receive 0 rows, even with the public API key
+   - Only authenticated users with valid session tokens can read data
+   - RLS policies are enforced server-side by Supabase
+
+2. **Login Flow**:
+   - Users visit `index.html` (login page)
+   - Enter credentials created manually in Supabase Dashboard
+   - Upon successful login, redirected to `map.html`
+   - Session token automatically passed with all API requests
+
+3. **Session Management**:
+   - **Remember Me**: Unchecked = 1 hour session, Checked = 7 day session
+   - **Auto-Logout**: Inactive sessions automatically logout after 30 minutes
+   - **Timeout Warning**: Users receive a 2-minute warning before auto-logout
+   - **Activity Tracking**: Mouse, keyboard, and scroll events reset the timeout
+
+4. **Token Refresh**: Supabase automatically refreshes auth tokens to maintain active sessions
+
+### Setup Instructions
+
+**Prerequisites**: Complete these manual steps in your Supabase Dashboard before deploying:
+
+1. **Enable Row Level Security**:
+   - Run the SQL in `supabase_security_policies.sql` using the Supabase SQL Editor
+   - This locks down `locations_cache` and `map_listings_geojson` to authenticated users only
+
+2. **Create User Accounts**:
+   - Navigate to Authentication > Users in Supabase Dashboard
+   - Click "Add User" and manually create accounts for each team member
+   - Share credentials securely (password manager, Signal, etc.)
+   - **No public sign-up form** = no unauthorized access
+
+See `SUPABASE_SETUP_GUIDE.md` for detailed step-by-step instructions.
+
+### Security Benefits
+
+- **No Exposed Backend**: Supabase handles all authentication server-side
+- **Database-Level Protection**: RLS prevents data access even if someone bypasses the UI
+- **Manual User Creation**: No public sign-up form to exploit
+- **Session Expiration**: Auto-logout prevents abandoned sessions from remaining active
+- **Token-Based Auth**: Tokens managed by Supabase, never exposed in client code
+- **Safe Public Keys**: The Supabase Anon Key is safe to commit because RLS blocks data access
+
+### Files Added for Security
+
+- `supabase_security_policies.sql` - SQL script to enable RLS and create policies
+- `SUPABASE_SETUP_GUIDE.md` - Step-by-step manual setup instructions
+- `index.html` - Now serves as the login page with Supabase Auth integration
+- `map.html` - Protected with auth guard, session timeout, and logout button
+
 ## Features
 
 - **Intelligent Addition Detection**: Automatically identifies new listings by comparing Rank 1 (latest) vs Rank 2 (previous) data per source
@@ -156,19 +213,44 @@ GMAPS_KEY=your_google_maps_api_key_here
    - `SUPABASE_URI` - Your PostgreSQL connection string
    - `GMAPS_KEY` - Your Google Maps API key
 
-### 4. Configure Map HTML
+### 4. Configure HTML Files
 
-Edit `map.html` (lines 117-119) and replace the placeholders:
+Both `index.html` and `map.html` need Supabase configuration:
+
+**Edit `index.html` (lines ~180-182):**
 
 ```javascript
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoi...'; // Your Mapbox public token
-const SUPABASE_URL = 'https://your-project.supabase.co'; // Your Supabase URL
+const SUPABASE_URL = 'https://your-project.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGc...'; // Your Supabase anonymous key
 ```
 
-### 5. Set Up Supabase Database
+**Edit `map.html` (lines ~146-148):**
 
-#### Create the Cache Table
+```javascript
+const MAPBOX_TOKEN = 'pk.eyJ1Ijoi...'; // Your Mapbox public token
+const SUPABASE_URL = 'https://your-project.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGc...'; // Your Supabase anonymous key
+```
+
+**Note**: The Supabase Anon Key is safe to commit to version control because Row Level Security (RLS) prevents unauthorized data access at the database level.
+
+### 5. Set Up Supabase Security & Database
+
+**IMPORTANT**: Complete security setup before proceeding. See `SUPABASE_SETUP_GUIDE.md` for detailed instructions.
+
+#### Enable Authentication & Row Level Security
+
+Run the SQL in `supabase_security_policies.sql` via Supabase SQL Editor to:
+- Enable RLS on `locations_cache` table
+- Create authentication policies
+- Revoke anonymous access
+- Grant access to authenticated users only
+
+#### Create User Accounts
+
+Navigate to Authentication > Users in Supabase Dashboard and manually create accounts for your team.
+
+#### Create the Cache Table (if not already exists)
 
 Run this in Supabase SQL Editor:
 
@@ -280,6 +362,35 @@ The `locations_cache` table uses `address_key` as the primary key, storing the n
 
 ## Troubleshooting
 
+### Authentication Issues
+
+**"Cannot log in with valid credentials"**
+- Verify the user account exists in Supabase Dashboard (Authentication > Users)
+- Check email is confirmed (click three dots > Confirm email)
+- Ensure RLS policies are created correctly (run `supabase_security_policies.sql`)
+- Check browser console (F12) for detailed error messages
+
+**"Map redirects to login immediately after successful login"**
+- Session may not be persisting - check browser's localStorage is enabled
+- Try checking "Remember me" for longer session duration
+- Verify Supabase URL and Anon Key are correct in both `index.html` and `map.html`
+
+**"Map shows no data after logging in"**
+- RLS policies might be blocking authenticated users
+- Run in Supabase SQL Editor: `SELECT COUNT(*) FROM public.locations_cache;`
+- Verify the policy grants SELECT to `authenticated` role
+- Check the policy was created: `SELECT * FROM pg_policies WHERE tablename = 'locations_cache';`
+
+**"Session expires too quickly"**
+- Use the "Remember me" checkbox for 7-day sessions (default is 1 hour)
+- Session timeout is set to 30 minutes of inactivity
+- Activity is tracked: moving mouse, keyboard input, scrolling resets the timer
+
+**"Auto-logout happens while actively using the map"**
+- Check browser console for auth state change events
+- Token refresh may be failing - verify internet connection
+- Try logging out and back in to establish a fresh session
+
 ### Geocoding Script Issues
 
 **"Error: SUPABASE_URI environment variable not set"**
@@ -344,14 +455,54 @@ View workflow runs:
 open-listings-map/
 ├── .github/
 │   └── workflows/
-│       └── geocode-listings.yml  # Automated daily geocoding
-├── geocode_listings.py           # Python geocoding script
-├── map.html                      # Interactive Mapbox map
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+│       └── geocode-listings.yml       # Automated daily geocoding
+├── geocode_listings.py                # Python geocoding script
+├── index.html                         # Login page with Supabase Auth
+├── map.html                           # Protected interactive Mapbox map
+├── supabase_security_policies.sql     # RLS policies for database security
+├── SUPABASE_SETUP_GUIDE.md            # Manual setup instructions
+├── requirements.txt                   # Python dependencies
+└── README.md                          # This file
 ```
 
 ## Testing Your Setup
+
+### 0. Test Authentication (Do This First!)
+
+Before testing the map functionality, verify authentication is working:
+
+```bash
+# 1. Open index.html in a browser
+# 2. You should see a login form (not a redirect)
+# 3. Try logging in with invalid credentials - should show error
+# 4. Log in with valid credentials (user created in Supabase)
+# 5. Should redirect to map.html and load data
+# 6. Click "Logout" button in bottom-right legend
+# 7. Should return to login page
+# 8. Try accessing map.html directly without logging in
+# 9. Should automatically redirect to index.html
+```
+
+**Expected Behavior:**
+- ✅ Login page shows modern form with email/password fields
+- ✅ Invalid credentials show error message
+- ✅ Valid credentials redirect to map
+- ✅ Map loads and displays points
+- ✅ Logout button returns to login page
+- ✅ Direct access to map.html redirects to login if not authenticated
+- ✅ Session persists across page refreshes (when "Remember me" checked)
+
+**Test RLS in Supabase SQL Editor:**
+
+```sql
+-- This should show your policy
+SELECT * FROM pg_policies WHERE tablename = 'locations_cache';
+
+-- This returns data (you're authenticated in dashboard)
+SELECT COUNT(*) FROM public.locations_cache;
+
+-- But the JavaScript API with anon key (not logged in) gets 0 rows
+```
 
 ### 1. Test Geocoding Script
 
