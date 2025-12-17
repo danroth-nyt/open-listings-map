@@ -2,10 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=map.html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Open Listings Map - Redirecting...</title>
+    <title>Open Listings Map - Login</title>
+    
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             display: flex;
@@ -13,38 +20,383 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        .redirect-message {
-            text-align: center;
-            padding: 40px;
+        
+        .login-container {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
         }
-        .redirect-message h1 {
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
             color: #333;
-            margin-bottom: 10px;
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 600;
         }
-        .redirect-message p {
+        
+        .login-header p {
             color: #666;
+            margin: 0;
+            font-size: 14px;
         }
-        .redirect-message a {
-            color: #00796B;
-            text-decoration: none;
-            font-weight: bold;
+        
+        .form-group {
+            margin-bottom: 20px;
         }
-        .redirect-message a:hover {
-            text-decoration: underline;
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .form-checkbox {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .form-checkbox-label {
+            color: #555;
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .login-button:active {
+            transform: translateY(0);
+        }
+        
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: shake 0.4s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            font-size: 14px;
+        }
+        
+        .loading-spinner.show {
+            display: block;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="redirect-message">
-        <h1>Open Listings Map</h1>
-        <p>Redirecting to the map...</p>
-        <p>If you're not redirected automatically, <a href="map.html">click here</a>.</p>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Open Listings Map</h1>
+            <p>Sign in to access the map</p>
+        </div>
+        
+        <div id="error-message" class="error-message"></div>
+        
+        <form id="login-form" onsubmit="return false;">
+            <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    class="form-input" 
+                    placeholder="your.email@example.com"
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="form-input" 
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                >
+            </div>
+            
+            <div class="form-checkbox-group">
+                <input 
+                    type="checkbox" 
+                    id="remember-me" 
+                    class="form-checkbox"
+                >
+                <label class="form-checkbox-label" for="remember-me">
+                    Remember me for 7 days
+                </label>
+            </div>
+            
+            <button type="submit" id="login-button" class="login-button">
+                Sign In
+            </button>
+        </form>
+        
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner"></div>
+            Checking session...
+        </div>
     </div>
+    
+    <script>
+        // ============================================================
+        // CONFIGURATION
+        // ============================================================
+        const SUPABASE_URL = 'https://wiufnhadffqkfeiydjzj.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_MljOvYoCOaTZATg7pTQDZg_uZWZyxy2';
+        
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // DOM elements
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const rememberMeCheckbox = document.getElementById('remember-me');
+        const loginButton = document.getElementById('login-button');
+        const errorMessage = document.getElementById('error-message');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        
+        // ============================================================
+        // Check if user is already logged in on page load
+        // ============================================================
+        async function checkExistingSession() {
+            loadingSpinner.classList.add('show');
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Session check error:', error);
+                    loadingSpinner.classList.remove('show');
+                    return;
+                }
+                
+                if (session) {
+                    // User is already logged in, redirect to map
+                    console.log('Existing session found, redirecting to map...');
+                    window.location.href = 'map.html';
+                } else {
+                    // No session, show login form
+                    loadingSpinner.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
+                loadingSpinner.classList.remove('show');
+            }
+        }
+        
+        // ============================================================
+        // Handle login form submission
+        // ============================================================
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            // Clear previous errors
+            errorMessage.classList.remove('show');
+            errorMessage.textContent = '';
+            
+            // Get form values
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const rememberMe = rememberMeCheckbox.checked;
+            
+            // Validate inputs
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+            
+            // Disable button and show loading state
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
+            
+            try {
+                // Attempt to sign in with Supabase Auth
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                    options: {
+                        // Remember me: extend session duration
+                        // true = 7 days, false = 1 hour (default)
+                        persistSession: rememberMe
+                    }
+                });
+                
+                if (error) {
+                    // Login failed
+                    console.error('Login error:', error);
+                    
+                    // Show user-friendly error message
+                    let errorMsg = 'Login failed. Please check your credentials.';
+                    if (error.message.includes('Invalid login credentials')) {
+                        errorMsg = 'Invalid email or password. Please try again.';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMsg = 'Please confirm your email address before logging in.';
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+                    
+                    showError(errorMsg);
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Sign In';
+                    return;
+                }
+                
+                // Login successful
+                console.log('Login successful!', data);
+                
+                // Update button to show success
+                loginButton.textContent = 'Success! Redirecting...';
+                
+                // Redirect to map page
+                setTimeout(() => {
+                    window.location.href = 'map.html';
+                }, 500);
+                
+            } catch (error) {
+                console.error('Unexpected error during login:', error);
+                showError('An unexpected error occurred. Please try again.');
+                loginButton.disabled = false;
+                loginButton.textContent = 'Sign In';
+            }
+        }
+        
+        // ============================================================
+        // Show error message
+        // ============================================================
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+        
+        // ============================================================
+        // Event listeners
+        // ============================================================
+        loginForm.addEventListener('submit', handleLogin);
+        
+        // Allow Enter key to submit from password field
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin(e);
+            }
+        });
+        
+        // Check for existing session on page load
+        checkExistingSession();
+    </script>
 </body>
 </html>
 
