@@ -487,7 +487,13 @@
                 const isNew = unit.status === 'addition';
                 const cardClass = isNew ? 'unit-card unit-card-new' : 'unit-card';
                 const unitLabel = unit.unit ? `Unit ${unit.unit}` : 'Unit N/A';
-                const rent = unit.rent ? `$${unit.rent.toLocaleString()}` : 'Price N/A';
+                
+                // Format rent - check if already has $ sign
+                let rent = 'Price N/A';
+                if (unit.rent) {
+                    const rentStr = String(unit.rent);
+                    rent = rentStr.startsWith('$') ? rentStr : `$${parseFloat(rentStr).toLocaleString()}`;
+                }
                 
                 // Format bedrooms
                 let bedText = 'Studio';
