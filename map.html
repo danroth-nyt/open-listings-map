@@ -78,6 +78,151 @@
             font-style: italic;
         }
         
+        /* Multi-unit popup styles */
+        .popup-address-header {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #222;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .address-summary {
+            font-size: 13px;
+            color: #555;
+            background-color: #f8f8f8;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .address-summary-highlight {
+            background-color: #E8F5E9;
+            color: #1B5E20;
+            font-weight: 600;
+            border: 1px solid #A5D6A7;
+        }
+        
+        .popup-units-container {
+            max-height: 320px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-right: 5px;
+        }
+        
+        /* Custom scrollbar for units container */
+        .popup-units-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .popup-units-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .popup-units-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        .popup-units-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .unit-card {
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-left: 4px solid #bdbdbd;
+            border-radius: 6px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .unit-card:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .unit-card:last-child {
+            margin-bottom: 0;
+        }
+        
+        .unit-card-new {
+            border-left-color: #00E676;
+            background-color: #f9fef9;
+            border-color: #c8e6c9;
+        }
+        
+        .unit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .unit-number {
+            font-weight: 600;
+            font-size: 14px;
+            color: #222;
+        }
+        
+        .unit-badge-new {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: #00E676;
+            color: #004D40;
+            letter-spacing: 0.5px;
+        }
+        
+        .unit-rent {
+            font-size: 18px;
+            color: #00796B;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        
+        .unit-details {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+        
+        .unit-source {
+            font-size: 11px;
+            color: #999;
+            font-style: italic;
+            margin-top: 4px;
+        }
+        
+        /* Make popup content wider and nicer */
+        .mapboxgl-popup-content {
+            padding: 18px;
+            min-width: 280px;
+            max-width: 360px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .mapboxgl-popup-close-button {
+            font-size: 20px;
+            padding: 5px 10px;
+            color: #666;
+        }
+        
+        .mapboxgl-popup-close-button:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
         .loading {
             position: absolute;
             top: 10px;
@@ -308,7 +453,6 @@
             }
         });
         
-        // ============================================================
         // Initialize Mapbox map
         mapboxgl.accessToken = MAPBOX_TOKEN;
         
@@ -319,27 +463,70 @@
             zoom: 12.5
         });
         
-        // Function to create popup content
-        function createPopupContent(properties) {
+        // Function to create multi-unit popup content
+        function createMultiUnitPopupContent(properties) {
             const address = properties.address || 'N/A';
-            const unit = properties.unit ? ` #${properties.unit}` : '';
-            const rent = properties.rent ? `$${properties.rent}` : 'N/A';
-            const bed = properties.bed || 'N/A';
-            const bath = properties.bath || 'N/A';
-            const source = properties.source || 'N/A';
-            const status = properties.status || 'unknown';
-            const statusClass = status === 'addition' ? 'status-addition' : 'status-existing';
-            const statusLabel = status === 'addition' ? 'New Addition' : 'Existing';
+            const units = properties.units || [];
+            const unitCount = properties.unitCount || units.length;
+            const newAdditionCount = properties.newAdditionCount || 0;
             
-            return `
-                <div class="popup-address">${address}${unit}</div>
-                <div class="popup-status ${statusClass}">${statusLabel}</div>
-                <div class="popup-rent">${rent}</div>
-                <div class="popup-details">
-                    <strong>Bed:</strong> ${bed} | <strong>Bath:</strong> ${bath}
-                </div>
-                <div class="popup-source">Source: ${source}</div>
-            `;
+            // Address header
+            let html = `<div class="popup-address-header">${address}</div>`;
+            
+            // Summary badge
+            const summaryClass = newAdditionCount > 0 ? 'address-summary address-summary-highlight' : 'address-summary';
+            const summaryText = unitCount === 1 
+                ? '1 unit' 
+                : `${unitCount} units${newAdditionCount > 0 ? ' · ' + newAdditionCount + ' new' : ''}`;
+            html += `<div class="${summaryClass}">${summaryText}</div>`;
+            
+            // Units container
+            html += '<div class="popup-units-container">';
+            
+            units.forEach(unit => {
+                const isNew = unit.status === 'addition';
+                const cardClass = isNew ? 'unit-card unit-card-new' : 'unit-card';
+                const unitLabel = unit.unit ? `Unit ${unit.unit}` : 'Unit N/A';
+                
+                // Format rent - check if already has $ sign
+                let rent = 'Price N/A';
+                if (unit.rent) {
+                    const rentStr = String(unit.rent);
+                    rent = rentStr.startsWith('$') ? rentStr : `$${parseFloat(rentStr).toLocaleString()}`;
+                }
+                
+                // Format bedrooms
+                let bedText = 'Studio';
+                if (unit.bed !== null && unit.bed !== undefined && unit.bed !== 0) {
+                    bedText = unit.bed === 1 ? '1 Bed' : `${unit.bed} Beds`;
+                }
+                
+                // Format bathrooms
+                let bathText = 'N/A';
+                if (unit.bath !== null && unit.bath !== undefined) {
+                    bathText = unit.bath === 1 ? '1 Bath' : `${unit.bath} Baths`;
+                }
+                
+                const source = unit.source || 'N/A';
+                
+                html += `
+                    <div class="${cardClass}">
+                        <div class="unit-header">
+                            <span class="unit-number">${unitLabel}</span>
+                            ${isNew ? '<span class="unit-badge-new">New</span>' : ''}
+                        </div>
+                        <div class="unit-rent">${rent}</div>
+                        <div class="unit-details">
+                            ${bedText} · ${bathText}
+                        </div>
+                        <div class="unit-source">Source: ${source}</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            return html;
         }
         
         // Fetch and display listings
@@ -368,10 +555,67 @@
                 
                 console.log(`Found ${data.length} listings`);
                 
-                // Build GeoJSON FeatureCollection from pre-formatted features
+                // Group units by coordinates (address)
+                const addressGroups = new Map();
+                
+                data.forEach(row => {
+                    const feature = row.feature;
+                    const coords = feature.geometry.coordinates;
+                    const coordKey = `${coords[0]},${coords[1]}`;
+                    
+                    if (!addressGroups.has(coordKey)) {
+                        addressGroups.set(coordKey, {
+                            coordinates: coords,
+                            address: feature.properties.address,
+                            units: []
+                        });
+                    }
+                    
+                    addressGroups.get(coordKey).units.push({
+                        unit: feature.properties.unit,
+                        rent: feature.properties.rent,
+                        bed: feature.properties.bed,
+                        bath: feature.properties.bath,
+                        source: feature.properties.source,
+                        status: feature.properties.status
+                    });
+                });
+                
+                console.log(`Grouped into ${addressGroups.size} unique addresses`);
+                
+                // Build GeoJSON with one feature per address
+                const features = [];
+                addressGroups.forEach((group, coordKey) => {
+                    // Sort units: new additions first, then by unit number
+                    group.units.sort((a, b) => {
+                        if (a.status === 'addition' && b.status !== 'addition') return -1;
+                        if (a.status !== 'addition' && b.status === 'addition') return 1;
+                        return (a.unit || '').localeCompare(b.unit || '');
+                    });
+                    
+                    // Determine if any unit is a new addition
+                    const hasNewAddition = group.units.some(u => u.status === 'addition');
+                    const newAdditionCount = group.units.filter(u => u.status === 'addition').length;
+                    
+                    features.push({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: group.coordinates
+                        },
+                        properties: {
+                            address: group.address,
+                            unitCount: group.units.length,
+                            newAdditionCount: newAdditionCount,
+                            status: hasNewAddition ? 'addition' : 'existing',
+                            units: group.units
+                        }
+                    });
+                });
+                
                 const geojson = {
                     type: 'FeatureCollection',
-                    features: data.map(row => row.feature)
+                    features: features
                 };
                 
                 console.log('GeoJSON built:', geojson);
@@ -415,14 +659,21 @@
                         const coordinates = e.features[0].geometry.coordinates.slice();
                         const properties = e.features[0].properties;
                         
+                        // Parse units array if it's a string (Mapbox may stringify it)
+                        if (typeof properties.units === 'string') {
+                            properties.units = JSON.parse(properties.units);
+                        }
+                        
                         // Ensure popup appears over the point clicked
                         while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
                             coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
                         }
                         
-                        new mapboxgl.Popup()
+                        new mapboxgl.Popup({
+                            maxWidth: '350px'
+                        })
                             .setLngLat(coordinates)
-                            .setHTML(createPopupContent(properties))
+                            .setHTML(createMultiUnitPopupContent(properties))
                             .addTo(map);
                     });
                     
@@ -460,6 +711,7 @@
             }
         }
         
+        // Start loading listings
         // ============================================================
         // MAIN INITIALIZATION - Only run after authentication check
         // ============================================================
