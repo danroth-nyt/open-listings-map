@@ -728,23 +728,27 @@
                     if (hasPhone) {
                         // Extract just the phone number for tel: link
                         const phoneDigits = contact.replace(/[^\d]/g, '');
-                        contactHtml = `<div class="unit-contact">📞 <a href="tel:${phoneDigits}">${contact}</a></div>`;
+                        const safeContact = escapeHtmlAttr(contact);
+                        contactHtml = `<div class="unit-contact">📞 <a href="tel:${phoneDigits}">${safeContact}</a></div>`;
                     } else {
                         // Just display text (e.g., "Baltic Redzep")
-                        contactHtml = `<div class="unit-contact">📞 ${contact}</div>`;
+                        const safeContact = escapeHtmlAttr(contact);
+                        contactHtml = `<div class="unit-contact">📞 ${safeContact}</div>`;
                     }
                 }
                 
                 // Format contact name (if available)
                 let contactNameHtml = '';
                 if (unit.contactName) {
-                    contactNameHtml = `<div class="unit-contact-name">👤 ${unit.contactName}</div>`;
+                    const safeContactName = escapeHtmlAttr(unit.contactName);
+                    contactNameHtml = `<div class="unit-contact-name">👤 ${safeContactName}</div>`;
                 }
                 
                 // Format keys access (if available)
                 let keysHtml = '';
                 if (unit.keysAccess) {
-                    keysHtml = `<div class="unit-keys">🔑 ${unit.keysAccess}</div>`;
+                    const safeKeysAccess = escapeHtmlAttr(unit.keysAccess);
+                    keysHtml = `<div class="unit-keys">🔑 ${safeKeysAccess}</div>`;
                 }
                 
                 html += `
