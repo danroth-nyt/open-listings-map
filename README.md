@@ -85,8 +85,7 @@ See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed 
   - Detailed popups with address, unit, rent, bed/bath, status, and source
 - **Visited Units Tracking**: Per-user persistent checkboxes to track which units you've visited
   - Mark units as visited with a simple checkbox
-  - State persists across sessions and devices
-  - Automatic 6-month expiration so units can be revisited over time
+  - State persists across sessions and devices indefinitely
   - Visited units are dimmed for easy visual identification
   - Secure per-user storage via Supabase with Row Level Security
 
@@ -259,7 +258,7 @@ Run the SQL in [`sql/user_visited_units.sql`](sql/user_visited_units.sql) via Su
 - Create `user_visited_units` table to track which units each user has visited
 - Enable Row Level Security so users only see their own visits
 - Create indexes for fast queries
-- Set up automatic 6-month expiration filtering
+- Visited status persists indefinitely until manually unmarked
 
 **This enables the checkbox feature** in unit popups to mark units as visited.
 

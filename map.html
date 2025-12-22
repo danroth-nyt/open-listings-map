@@ -375,7 +375,7 @@
         // Store visited units in memory for fast lookups
         let visitedUnits = new Set();
         
-        // Load user's visited units from last 6 months
+        // Load user's visited units
         async function loadVisitedUnits() {
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
@@ -384,14 +384,9 @@
                     return;
                 }
                 
-                // Calculate date 6 months ago
-                const sixMonthsAgo = new Date();
-                sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-                
                 const { data, error } = await supabaseClient
                     .from('user_visited_units')
-                    .select('source_name, address, unit_number, visited_at')
-                    .gte('visited_at', sixMonthsAgo.toISOString());
+                    .select('source_name, address, unit_number, visited_at');
                 
                 if (error) {
                     console.error('Error loading visited units:', error);
@@ -405,7 +400,7 @@
                         const key = `${row.source_name}|${row.address}|${row.unit_number}`;
                         visitedUnits.add(key);
                     });
-                    console.log(`Loaded ${visitedUnits.size} visited units (last 6 months)`);
+                    console.log(`Loaded ${visitedUnits.size} visited units`);
                 }
             } catch (error) {
                 console.error('Unexpected error loading visited units:', error);

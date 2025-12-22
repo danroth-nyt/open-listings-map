@@ -2,7 +2,7 @@
 -- User Visited Units Tracking Table
 -- ============================================================
 -- This table stores which units each user has visited.
--- Records older than 6 months are filtered out on query (not auto-deleted).
+-- Visited status persists indefinitely until manually unmarked.
 -- ============================================================
 
 -- Create the table
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.user_visited_units (
 CREATE INDEX IF NOT EXISTS idx_user_visited_units_user_id 
     ON public.user_visited_units(user_id);
 
--- Add index for date-based filtering (6-month expiration queries)
+-- Add index for date-based queries and sorting
 CREATE INDEX IF NOT EXISTS idx_user_visited_units_visited_at 
     ON public.user_visited_units(visited_at);
 
@@ -57,7 +57,8 @@ CREATE POLICY "Users can delete own visited units"
 -- Optional: Cleanup Function for Old Records
 -- ============================================================
 -- This function deletes records older than 6 months
--- You can schedule this to run periodically if desired
+-- OPTIONAL: Only use if you want to automatically clean up old visits
+-- By default, visited status persists indefinitely
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION cleanup_old_visited_units()

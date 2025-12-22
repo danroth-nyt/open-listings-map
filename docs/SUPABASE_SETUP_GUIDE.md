@@ -58,13 +58,13 @@ This feature allows users to mark which units they've visited with persistent ch
 **What This Does:**
 - Creates a table to store which units each user has visited
 - Each user can only see/modify their own visited units (RLS enforced)
-- Visits are automatically filtered to last 6 months
+- Visited status persists indefinitely until manually unmarked
 - Supports multiple users tracking independently
 
 **How Users Will Use It:**
 - When viewing a unit popup on the map, check "Visited" checkbox
-- Checkbox state persists across sessions and devices
-- After 6 months, the unit appears unvisited again (allows re-visiting)
+- Checkbox state persists across sessions and devices indefinitely
+- Uncheck the checkbox to mark as unvisited again
 - Visited units are dimmed for easy visual identification
 
 **To View Your Visited Units:**
@@ -72,7 +72,6 @@ This feature allows users to mark which units they've visited with persistent ch
 In Supabase SQL Editor:
 ```sql
 SELECT * FROM user_visited_units
-WHERE visited_at > NOW() - INTERVAL '6 months'
 ORDER BY visited_at DESC;
 ```
 
