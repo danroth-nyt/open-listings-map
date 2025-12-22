@@ -30,7 +30,65 @@ This guide walks you through the manual steps required to secure your Open Listi
 
 ---
 
-## Step 2: Create Team User Accounts
+## Step 2: Set Up Visited Units Tracking (Optional but Recommended)
+
+This feature allows users to mark which units they've visited with persistent checkboxes.
+
+1. **Open SQL Editor**
+   - In Supabase Dashboard, click **SQL Editor**
+   - Click **New query**
+
+2. **Run Visited Units Setup**
+   - Copy the entire contents of [`../sql/user_visited_units.sql`](../sql/user_visited_units.sql)
+   - Paste into the SQL Editor
+   - Click **Run**
+
+3. **Verify Success**
+   - You should see success messages for:
+     - Table created: `user_visited_units`
+     - Indexes created
+     - RLS enabled
+     - Policies created
+
+4. **View the Table**
+   - Click **Table Editor** in left sidebar
+   - Find `user_visited_units` in the table list
+   - Initially empty (users will populate it as they mark units visited)
+
+**What This Does:**
+- Creates a table to store which units each user has visited
+- Each user can only see/modify their own visited units (RLS enforced)
+- Visits are automatically filtered to last 6 months
+- Supports multiple users tracking independently
+
+**How Users Will Use It:**
+- When viewing a unit popup on the map, check "Visited" checkbox
+- Checkbox state persists across sessions and devices
+- After 6 months, the unit appears unvisited again (allows re-visiting)
+- Visited units are dimmed for easy visual identification
+
+**To View Your Visited Units:**
+
+In Supabase SQL Editor:
+```sql
+SELECT * FROM user_visited_units
+WHERE visited_at > NOW() - INTERVAL '6 months'
+ORDER BY visited_at DESC;
+```
+
+**Optional: Schedule Automatic Cleanup**
+
+If you want to delete old records (>6 months) from the database entirely:
+
+```sql
+-- This is already created by the setup script
+-- You can manually run it, or schedule it with pg_cron
+SELECT cleanup_old_visited_units();
+```
+
+---
+
+## Step 3: Create Team User Accounts
 
 Since you don't want public sign-ups, you'll manually create accounts for each team member.
 
@@ -69,7 +127,7 @@ User 3: teammate2@company.com
 
 ---
 
-## Step 3: Test Security Before Deploying
+## Step 4: Test Security Before Deploying
 
 ### Test 1: Anonymous Access Should Fail
 
