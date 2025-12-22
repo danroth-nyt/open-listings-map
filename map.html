@@ -203,6 +203,56 @@
             margin-top: 4px;
         }
         
+        /* Visited checkbox styles */
+        .visited-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .visited-checkbox-label:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .visited-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #00796B;
+            margin: 0;
+        }
+        
+        .checkbox-text {
+            font-size: 11px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        /* Dim visited units */
+        .unit-visited {
+            opacity: 0.65;
+            background-color: #f5f5f5;
+        }
+        
+        .unit-visited:hover {
+            opacity: 0.8;
+        }
+        
+        /* Adjust unit-header layout for checkbox */
+        .unit-header {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+        
         /* Make popup content wider and nicer */
         .mapboxgl-popup-content {
             padding: 18px;
@@ -318,6 +368,102 @@
         let sessionTimeoutId = null;
         let warningTimeoutId = null;
         let lastActivityTime = Date.now();
+        
+        // ============================================================
+        // VISITED UNITS STATE MANAGEMENT
+        // ============================================================
+        // Store visited units in memory for fast lookups
+        let visitedUnits = new Set();
+        
+        // Load user's visited units
+        async function loadVisitedUnits() {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) {
+                    console.log('No user found, skipping visited units load');
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
+                    .from('user_visited_units')
+                    .select('source_name, address, unit_number, visited_at');
+                
+                if (error) {
+                    console.error('Error loading visited units:', error);
+                    return;
+                }
+                
+                if (data) {
+                    visitedUnits.clear();
+                    data.forEach(row => {
+                        // Create a unique key for each unit
+                        const key = `${row.source_name}|${row.address}|${row.unit_number}`;
+                        visitedUnits.add(key);
+                    });
+                    console.log(`Loaded ${visitedUnits.size} visited units`);
+                }
+            } catch (error) {
+                console.error('Unexpected error loading visited units:', error);
+            }
+        }
+        
+        // Toggle visited status for a unit
+        async function toggleVisited(source, address, unitNumber, checkbox) {
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) {
+                    console.error('No user found, cannot toggle visited');
+                    checkbox.checked = !checkbox.checked; // Revert checkbox
+                    return;
+                }
+                
+                const key = `${source}|${address}|${unitNumber}`;
+                
+                if (checkbox.checked) {
+                    // Mark as visited
+                    const { error } = await supabaseClient
+                        .from('user_visited_units')
+                        .upsert({
+                            user_id: user.id,
+                            source_name: source,
+                            address: address,
+                            unit_number: unitNumber
+                        }, {
+                            onConflict: 'user_id,source_name,address,unit_number'
+                        });
+                    
+                    if (error) {
+                        console.error('Error marking unit as visited:', error);
+                        checkbox.checked = false; // Revert on error
+                    } else {
+                        visitedUnits.add(key);
+                        console.log(`Marked as visited: ${key}`);
+                    }
+                } else {
+                    // Remove visited mark
+                    const { error } = await supabaseClient
+                        .from('user_visited_units')
+                        .delete()
+                        .match({
+                            user_id: user.id,
+                            source_name: source,
+                            address: address,
+                            unit_number: unitNumber
+                        });
+                    
+                    if (error) {
+                        console.error('Error removing visited mark:', error);
+                        checkbox.checked = true; // Revert on error
+                    } else {
+                        visitedUnits.delete(key);
+                        console.log(`Removed visited mark: ${key}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Unexpected error toggling visited:', error);
+                checkbox.checked = !checkbox.checked; // Revert checkbox
+            }
+        }
         
         // ============================================================
         // AUTHENTICATION GUARD - Check session before loading map
@@ -463,6 +609,17 @@
             zoom: 12.5
         });
         
+        // Helper function to escape HTML attribute values
+        function escapeHtmlAttr(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+        
         // Function to create multi-unit popup content
         function createMultiUnitPopupContent(properties) {
             const address = properties.address || 'N/A';
@@ -485,7 +642,16 @@
             
             units.forEach(unit => {
                 const isNew = unit.status === 'addition';
+                const source = unit.source || 'N/A';
+                
+                // Check if this unit has been visited
+                const visitedKey = `${source}|${address}|${unit.unit || ''}`;
+                const isVisited = visitedUnits.has(visitedKey);
+                
+                // Add visited class if applicable
                 const cardClass = isNew ? 'unit-card unit-card-new' : 'unit-card';
+                const visitedClass = isVisited ? ' unit-visited' : '';
+                
                 const unitLabel = unit.unit ? `Unit ${unit.unit}` : 'Unit N/A';
                 
                 // Format rent - check if already has $ sign
@@ -507,11 +673,22 @@
                     bathText = unit.bath === 1 ? '1 Bath' : `${unit.bath} Baths`;
                 }
                 
-                const source = unit.source || 'N/A';
+                // Escape values for safe use in onclick attribute
+                const safeSource = escapeHtmlAttr(source);
+                const safeAddress = escapeHtmlAttr(address);
+                const safeUnit = escapeHtmlAttr(unit.unit || '');
                 
                 html += `
-                    <div class="${cardClass}">
+                    <div class="${cardClass}${visitedClass}">
                         <div class="unit-header">
+                            <label class="visited-checkbox-label">
+                                <input type="checkbox" 
+                                    class="visited-checkbox" 
+                                    ${isVisited ? 'checked' : ''} 
+                                    onchange="toggleVisited('${safeSource}', '${safeAddress}', '${safeUnit}', this)"
+                                >
+                                <span class="checkbox-text">Visited</span>
+                            </label>
                             <span class="unit-number">${unitLabel}</span>
                             ${isNew ? '<span class="unit-badge-new">New</span>' : ''}
                         </div>
@@ -732,6 +909,9 @@
             
             // Start the session timeout
             resetSessionTimeout();
+            
+            // Load user's visited units (last 6 months)
+            await loadVisitedUnits();
             
             // Load the map data
             loadListings();

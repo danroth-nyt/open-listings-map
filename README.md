@@ -69,9 +69,10 @@ See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed 
 ### Files Added for Security
 
 - [`sql/supabase_security_policies.sql`](sql/supabase_security_policies.sql) - SQL script to enable RLS and create policies
+- [`sql/user_visited_units.sql`](sql/user_visited_units.sql) - SQL script for visited units tracking table
 - [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) - Step-by-step manual setup instructions
 - `index.html` - Now serves as the login page with Supabase Auth integration
-- `map.html` - Protected with auth guard, session timeout, and logout button
+- `map.html` - Protected with auth guard, session timeout, logout button, and visited units tracking
 
 ## Features
 
@@ -82,6 +83,11 @@ See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed 
   - 🟢 Green markers for new additions
   - ⚫ Dark grey markers for existing listings
   - Detailed popups with address, unit, rent, bed/bath, status, and source
+- **Visited Units Tracking**: Per-user persistent checkboxes to track which units you've visited
+  - Mark units as visited with a simple checkbox
+  - State persists across sessions and devices indefinitely
+  - Visited units are dimmed for easy visual identification
+  - Secure per-user storage via Supabase with Row Level Security
 
 ## Prerequisites
 
@@ -245,6 +251,16 @@ Run the SQL in [`sql/supabase_security_policies.sql`](sql/supabase_security_poli
 - Create authentication policies
 - Revoke anonymous access
 - Grant access to authenticated users only
+
+#### Set Up Visited Units Tracking (Optional)
+
+Run the SQL in [`sql/user_visited_units.sql`](sql/user_visited_units.sql) via Supabase SQL Editor to:
+- Create `user_visited_units` table to track which units each user has visited
+- Enable Row Level Security so users only see their own visits
+- Create indexes for fast queries
+- Visited status persists indefinitely until manually unmarked
+
+**This enables the checkbox feature** in unit popups to mark units as visited.
 
 #### Create User Accounts
 
@@ -461,7 +477,8 @@ open-listings-map/
 │   ├── SUPABASE_SETUP_GUIDE.md        # Manual setup instructions
 │   └── TESTING_GUIDE.md               # Testing procedures
 ├── sql/                               # Database scripts
-│   └── supabase_security_policies.sql # RLS policies for database security
+│   ├── supabase_security_policies.sql # RLS policies for database security
+│   └── user_visited_units.sql         # Visited units tracking table & policies
 ├── geocode_listings.py                # Python geocoding script
 ├── index.html                         # Login page with Supabase Auth
 ├── map.html                           # Protected interactive Mapbox map
