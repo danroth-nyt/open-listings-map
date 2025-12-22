@@ -609,6 +609,17 @@
             zoom: 12.5
         });
         
+        // Helper function to escape HTML attribute values
+        function escapeHtmlAttr(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+        
         // Function to create multi-unit popup content
         function createMultiUnitPopupContent(properties) {
             const address = properties.address || 'N/A';
@@ -663,9 +674,9 @@
                 }
                 
                 // Escape values for safe use in onclick attribute
-                const safeSource = source.replace(/'/g, "\\'");
-                const safeAddress = address.replace(/'/g, "\\'");
-                const safeUnit = (unit.unit || '').replace(/'/g, "\\'");
+                const safeSource = escapeHtmlAttr(source);
+                const safeAddress = escapeHtmlAttr(address);
+                const safeUnit = escapeHtmlAttr(unit.unit || '');
                 
                 html += `
                     <div class="${cardClass}${visitedClass}">

@@ -26,6 +26,13 @@ CREATE INDEX IF NOT EXISTS idx_user_visited_units_user_id
 CREATE INDEX IF NOT EXISTS idx_user_visited_units_visited_at 
     ON public.user_visited_units(visited_at);
 
+-- Add partial unique index for rows with NULL unit_number
+-- This prevents duplicate visited records when unit_number is NULL
+-- (standard UNIQUE constraint treats each NULL as distinct)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_visited_units_unique_no_unit
+    ON public.user_visited_units(user_id, source_name, address)
+    WHERE unit_number IS NULL;
+
 -- ============================================================
 -- Row Level Security (RLS) Policies
 -- ============================================================
