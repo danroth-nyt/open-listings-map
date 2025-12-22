@@ -2,6 +2,8 @@
 
 An intelligent mapping tool that automatically detects and visualizes new rental listing additions by comparing the latest batch (Rank 1) against the previous batch (Rank 2) directly in SQL. The system geocodes addresses efficiently using a cache and displays results with color-coded markers.
 
+<img width="1781" height="1300" alt="image" src="https://github.com/user-attachments/assets/5c9cc8d9-7b79-4068-a624-053313a70b10" />
+
 ## Architecture
 
 ```
