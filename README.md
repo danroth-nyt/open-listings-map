@@ -82,7 +82,7 @@ See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed 
 - **Interactive Map**: Mapbox GL JS displays listings with:
   - 🟢 Green markers for new additions
   - ⚫ Dark grey markers for existing listings
-  - Detailed popups with address, unit, rent, bed/bath, status, and source
+  - Detailed popups with address, unit, rent, bed/bath, contact info, key access, and source
 - **Visited Units Tracking**: Per-user persistent checkboxes to track which units you've visited
   - Mark units as visited with a simple checkbox
   - State persists across sessions and devices indefinitely
@@ -106,6 +106,9 @@ Must include columns:
 - `rent_price` (TEXT/NUMERIC) - The rent amount
 - `bedrooms` (TEXT/NUMERIC) - Number of bedrooms
 - `bathrooms` (TEXT/NUMERIC) - Number of bathrooms
+- `contact` (TEXT) - Phone number or contact info
+- `contact_name` (TEXT) - Name of contact person (Super, Doorman, etc.)
+- `keys_access` (TEXT) - Key access instructions
 - `filename_date` (DATE) - Used for ranking (CRITICAL for Rank 1 vs Rank 2 logic)
 
 #### 2. Cache Table: `public.locations_cache`
@@ -164,6 +167,9 @@ SELECT
             'bed', l.bedrooms,
             'bath', l.bathrooms,
             'source', l.source_name,
+            'contact', l.contact,
+            'contactName', l.contact_name,
+            'keysAccess', l.keys_access,
             'status', CASE WHEN p.address IS NULL THEN 'addition' ELSE 'existing' END
         )
     ) as feature
@@ -334,6 +340,10 @@ Open `map.html` in any web browser. The map will:
   - Status badge (NEW ADDITION or EXISTING)
   - Rent amount
   - Bed/bath counts
+  - Contact name (Super, Doorman, etc.) with person icon
+  - Phone number (clickable tel: link) with phone icon
+  - Key access instructions with key icon
+  - Visited checkbox for tracking
   - Data source
 - Zoom-responsive marker sizing (larger at higher zoom levels)
 
