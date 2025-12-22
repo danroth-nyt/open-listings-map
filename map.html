@@ -203,6 +203,47 @@
             margin-top: 4px;
         }
         
+        .unit-contact {
+            font-size: 12px;
+            color: #00796B;
+            font-weight: 600;
+            margin-top: 6px;
+            padding: 4px 8px;
+            background-color: #E0F2F1;
+            border-radius: 4px;
+            border-left: 3px solid #00796B;
+        }
+        
+        .unit-contact a {
+            color: #00796B;
+            text-decoration: none;
+        }
+        
+        .unit-contact a:hover {
+            text-decoration: underline;
+        }
+        
+        .unit-contact-name {
+            font-size: 12px;
+            color: #6A1B9A;
+            font-weight: 600;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background-color: #F3E5F5;
+            border-radius: 4px;
+            border-left: 3px solid #6A1B9A;
+        }
+        
+        .unit-keys {
+            font-size: 11px;
+            color: #F57C00;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background-color: #FFF3E0;
+            border-radius: 4px;
+            border-left: 3px solid #F57C00;
+        }
+        
         /* Visited checkbox styles */
         .visited-checkbox-label {
             display: flex;
@@ -678,6 +719,34 @@
                 const safeAddress = escapeHtmlAttr(address);
                 const safeUnit = escapeHtmlAttr(unit.unit || '');
                 
+                // Format contact information (if available)
+                let contactHtml = '';
+                if (unit.contact) {
+                    const contact = String(unit.contact);
+                    // Check if contact is a phone number (has digits)
+                    const hasPhone = /\d{3}[-.\s]?\d{3,4}[-.\s]?\d{4}|\d{3}[-.\s]?\d{4}/.test(contact);
+                    if (hasPhone) {
+                        // Extract just the phone number for tel: link
+                        const phoneDigits = contact.replace(/[^\d]/g, '');
+                        contactHtml = `<div class="unit-contact">📞 <a href="tel:${phoneDigits}">${contact}</a></div>`;
+                    } else {
+                        // Just display text (e.g., "Baltic Redzep")
+                        contactHtml = `<div class="unit-contact">📞 ${contact}</div>`;
+                    }
+                }
+                
+                // Format contact name (if available)
+                let contactNameHtml = '';
+                if (unit.contactName) {
+                    contactNameHtml = `<div class="unit-contact-name">👤 ${unit.contactName}</div>`;
+                }
+                
+                // Format keys access (if available)
+                let keysHtml = '';
+                if (unit.keysAccess) {
+                    keysHtml = `<div class="unit-keys">🔑 ${unit.keysAccess}</div>`;
+                }
+                
                 html += `
                     <div class="${cardClass}${visitedClass}">
                         <div class="unit-header">
@@ -696,6 +765,9 @@
                         <div class="unit-details">
                             ${bedText} · ${bathText}
                         </div>
+                        ${contactNameHtml}
+                        ${contactHtml}
+                        ${keysHtml}
                         <div class="unit-source">Source: ${source}</div>
                     </div>
                 `;
@@ -754,6 +826,9 @@
                         bed: feature.properties.bed,
                         bath: feature.properties.bath,
                         source: feature.properties.source,
+                        contact: feature.properties.contact,
+                        contactName: feature.properties.contactName,
+                        keysAccess: feature.properties.keysAccess,
                         status: feature.properties.status
                     });
                 });
