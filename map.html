@@ -107,9 +107,14 @@
             }
         }
         
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
             font-family: var(--font-sans);
             font-size: 16px;
             line-height: 1.5;
@@ -1252,7 +1257,7 @@
     
     <!-- Filter Bar -->
     <button class="filter-toggle" onclick="toggleFilters()">
-        ▲ Filters
+        ▼ Filters
     </button>
     
     <div class="filter-bar collapsed" id="filter-bar">
@@ -1675,12 +1680,17 @@
             mapElement.classList.toggle('with-filters');
             
             // Update toggle text
-            // Collapsed = closed (show up arrow to open upward on mobile)
-            // Not collapsed = open (show down arrow to close downward on mobile)
-            if (filterBar.classList.contains('collapsed')) {
-                filterToggle.textContent = '▲ Filters';
+            // Mobile (bottom sheet): collapsed = ▲ (pull up), open = ▼ (push down)
+            // Desktop (top bar): collapsed = ▼ (expand down), open = ▲ (collapse up)
+            const isMobile = window.innerWidth <= 767;
+            const isCollapsed = filterBar.classList.contains('collapsed');
+            
+            if (isMobile) {
+                // Mobile bottom sheet: arrow shows direction to swipe
+                filterToggle.textContent = isCollapsed ? '▲ Filters' : '▼ Filters';
             } else {
-                filterToggle.textContent = '▼ Filters';
+                // Desktop top bar: arrow shows current state
+                filterToggle.textContent = isCollapsed ? '▼ Filters' : '▲ Filters';
             }
         }
         
@@ -2174,6 +2184,25 @@
             // Load the map data
             loadListings();
         }
+        
+        // Set initial arrow direction based on viewport
+        function setInitialFilterArrow() {
+            const filterToggle = document.querySelector('.filter-toggle');
+            const isMobile = window.innerWidth <= 767;
+            // Starts collapsed, so desktop shows ▼ (expand), mobile shows ▲ (pull up)
+            filterToggle.textContent = isMobile ? '▲ Filters' : '▼ Filters';
+        }
+        
+        // Update arrow on window resize
+        window.addEventListener('resize', () => {
+            const filterBar = document.getElementById('filter-bar');
+            if (filterBar.classList.contains('collapsed')) {
+                setInitialFilterArrow();
+            }
+        });
+        
+        // Set initial state
+        setInitialFilterArrow();
         
         // Start the application
         initializeApp();
