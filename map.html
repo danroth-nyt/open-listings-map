@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Open Listings Map</title>
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
     <!-- Mapbox GL JS -->
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
@@ -13,10 +18,104 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
+        :root {
+            /* Colors */
+            --primary-600: #5b4dc7;
+            --primary-500: #6c5ce7;
+            --accent-500: #00b894;
+            --accent-600: #00796B;
+            --neutral-50: #f8f9fa;
+            --neutral-100: #f1f3f5;
+            --neutral-200: #e9ecef;
+            --neutral-300: #dee2e6;
+            --neutral-400: #ced4da;
+            --neutral-500: #adb5bd;
+            --neutral-600: #495057;
+            --neutral-700: #343a40;
+            --neutral-800: #212529;
+            --neutral-900: #000000;
+            
+            /* Status Colors */
+            --status-new: #00E676;
+            --status-new-bg: #E8F5E9;
+            --status-new-dark: #004D40;
+            --status-existing: #37474F;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+            
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            
+            /* Typography */
+            --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-serif: 'DM Serif Display', Georgia, serif;
+            
+            /* Transitions */
+            --transition-fast: 150ms ease;
+            --transition-base: 200ms ease;
+            --transition-slow: 300ms ease;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark mode colors */
+                --primary-600: #8b7dff;
+                --primary-500: #9d8df7;
+                --accent-500: #26d9a6;
+                --accent-600: #00d9a3;
+                --neutral-50: #1a1a2e;
+                --neutral-100: #25243d;
+                --neutral-200: #353452;
+                --neutral-300: #4a4a6a;
+                --neutral-400: #626280;
+                --neutral-500: #8a8aa8;
+                --neutral-600: #b8b8d0;
+                --neutral-700: #d0d0e8;
+                --neutral-800: #e8e8f5;
+                --neutral-900: #ffffff;
+                
+                /* Status Colors for dark mode */
+                --status-new: #26d9a6;
+                --status-new-bg: rgba(38, 217, 166, 0.08);
+                --status-new-dark: #26d9a6;
+                --status-existing: #b8b8d0;
+                
+                /* Dark mode shadows - lighter/glow effect */
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+                --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+            }
+            
+            /* Enhanced input/select visibility in dark mode */
+            .filter-input,
+            .filter-select {
+                border-color: #6a6a8a;
+                box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 
+                            inset 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
+            
+            .filter-input:focus,
+            .filter-select:focus {
+                border-color: var(--primary-500);
+                box-shadow: 0 0 0 1px rgba(157, 141, 247, 0.3), 
+                            inset 0 1px 2px rgba(0, 0, 0, 0.2);
+            }
+        }
+        
         body {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: var(--font-sans);
+            font-size: 16px;
+            line-height: 1.5;
+            color: var(--neutral-800);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         #map {
@@ -24,127 +123,136 @@
             top: 0;
             bottom: 0;
             width: 100%;
+            transition: top var(--transition-base);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.3s forwards;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        #map.with-filters {
+            top: 60px;
         }
         
         .mapboxgl-popup-content {
-            padding: 15px;
-            min-width: 200px;
+            padding: 0 !important;
+            min-width: 280px;
+            max-width: 360px;
+            max-height: 450px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            /* Force light theme for popup readability */
+            background: #ffffff;
+            color: #212529;
         }
         
-        .popup-address {
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: #333;
+        .mapboxgl-popup {
+            max-height: none !important;
         }
         
-        .popup-rent {
-            font-size: 16px;
-            color: #00796B;
-            font-weight: bold;
-            margin-bottom: 8px;
+        .mapboxgl-popup-close-button {
+            font-size: 20px;
+            padding: 8px 12px;
+            color: #495057;
+            transition: all var(--transition-fast);
+            z-index: 10;
         }
         
-        .popup-details {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 6px;
-            line-height: 1.4;
+        .mapboxgl-popup-close-button:hover {
+            background-color: #f1f3f5;
+            color: #212529;
         }
         
-        .popup-status {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 6px;
+        /* Multi-unit popup styles - forced light theme for readability */
+        .popup-header {
+            background: #f8f9fa;
+            padding: 16px 18px;
+            border-bottom: 1px solid #e9ecef;
+            flex-shrink: 0;
         }
         
-        .status-addition {
-            background-color: #00E676;
-            color: #004D40;
-        }
-        
-        .status-existing {
-            background-color: #37474F;
-            color: #FFFFFF;
-        }
-        
-        .popup-source {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
-        }
-        
-        /* Multi-unit popup styles */
         .popup-address-header {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 12px;
-            color: #222;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e0e0e0;
+            font-family: var(--font-serif);
+            font-weight: 400;
+            font-size: 18px;
+            margin: 0 0 8px 0;
+            color: #212529;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        
+        .popup-address-header:hover {
+            color: #00796B;
         }
         
         .address-summary {
             font-size: 13px;
-            color: #555;
-            background-color: #f8f8f8;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            text-align: center;
+            color: #495057;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .address-summary-highlight {
             background-color: #E8F5E9;
-            color: #1B5E20;
+            color: #00b894;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
             font-weight: 600;
-            border: 1px solid #A5D6A7;
+            font-size: 11px;
+            border: 1px solid #00b894;
         }
         
         .popup-units-container {
-            max-height: 320px;
+            flex: 1;
+            min-height: 0;
+            max-height: 250px;
             overflow-y: auto;
-            margin-top: 10px;
-            padding-right: 5px;
+            padding: 12px 18px;
+            background: #ffffff;
         }
         
         /* Custom scrollbar for units container */
         .popup-units-container::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
         }
         
         .popup-units-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
+            background: #f1f3f5;
         }
         
         .popup-units-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
+            background: #ced4da;
+            border-radius: 4px;
         }
         
         .popup-units-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #adb5bd;
         }
         
         .unit-card {
-            padding: 12px;
-            margin-bottom: 10px;
-            background-color: #fafafa;
-            border: 1px solid #e8e8e8;
-            border-left: 4px solid #bdbdbd;
-            border-radius: 6px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 16px;
+            margin-bottom: 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 3px solid #dee2e6;
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
         }
         
         .unit-card:hover {
-            transform: translateX(2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left-color: #ced4da;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         
         .unit-card:last-child {
@@ -152,96 +260,108 @@
         }
         
         .unit-card-new {
-            border-left-color: #00E676;
-            background-color: #f9fef9;
-            border-color: #c8e6c9;
+            border-left-color: #00b894;
+            border-left-width: 4px;
+            background-color: #E8F5E9;
         }
         
         .unit-header {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 10px;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         
         .unit-number {
             font-weight: 600;
-            font-size: 14px;
-            color: #222;
+            font-size: 13px;
+            color: #343a40;
+            order: 2;
         }
         
         .unit-badge-new {
             display: inline-block;
             padding: 3px 8px;
-            border-radius: 4px;
+            border-radius: var(--radius-sm);
             font-size: 10px;
-            font-weight: bold;
+            font-weight: 600;
             text-transform: uppercase;
-            background-color: #00E676;
-            color: #004D40;
+            background-color: transparent;
+            color: #00b894;
             letter-spacing: 0.5px;
+            order: 3;
+            border: 1.5px solid #00b894;
         }
         
         .unit-rent {
-            font-size: 18px;
-            color: #00796B;
-            font-weight: bold;
-            margin-bottom: 6px;
+            font-size: 24px;
+            color: #212529;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1;
         }
         
         .unit-details {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 6px;
-            line-height: 1.5;
+            font-size: 14px;
+            color: #495057;
+            margin-bottom: 4px;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+        
+        .unit-info-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            color: #495057;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+            flex-wrap: wrap;
+        }
+        
+        .unit-info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .unit-source {
             font-size: 11px;
-            color: #999;
-            font-style: italic;
-            margin-top: 4px;
+            color: #6c757d;
+            margin-top: 12px;
         }
+        
         
         .unit-contact {
             font-size: 12px;
             color: #00796B;
-            font-weight: 600;
-            margin-top: 6px;
-            padding: 4px 8px;
-            background-color: #E0F2F1;
-            border-radius: 4px;
-            border-left: 3px solid #00796B;
+            font-weight: 500;
         }
         
         .unit-contact a {
             color: #00796B;
             text-decoration: none;
+            transition: color var(--transition-fast);
         }
         
         .unit-contact a:hover {
+            color: #00b894;
             text-decoration: underline;
         }
         
         .unit-contact-name {
             font-size: 12px;
-            color: #6A1B9A;
-            font-weight: 600;
-            margin-top: 4px;
-            padding: 4px 8px;
-            background-color: #F3E5F5;
-            border-radius: 4px;
-            border-left: 3px solid #6A1B9A;
+            color: #343a40;
+            font-weight: 500;
         }
         
         .unit-keys {
             font-size: 11px;
-            color: #F57C00;
+            color: #495057;
             margin-top: 4px;
-            padding: 4px 8px;
-            background-color: #FFF3E0;
-            border-radius: 4px;
-            border-left: 3px solid #F57C00;
         }
         
         /* Visited checkbox styles */
@@ -249,17 +369,18 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 12px;
-            color: #666;
+            font-size: 11px;
+            color: #495057;
             cursor: pointer;
             user-select: none;
             padding: 4px 8px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
+            border-radius: var(--radius-sm);
+            transition: background-color var(--transition-fast);
+            order: 1;
         }
         
         .visited-checkbox-label:hover {
-            background-color: #f0f0f0;
+            background-color: #f1f3f5;
         }
         
         .visited-checkbox {
@@ -273,74 +394,93 @@
         .checkbox-text {
             font-size: 11px;
             font-weight: 500;
-            color: #555;
+            color: #495057;
         }
         
         /* Dim visited units */
         .unit-visited {
-            opacity: 0.65;
-            background-color: #f5f5f5;
+            opacity: 0.6;
+            background-color: #f8f9fa;
         }
         
         .unit-visited:hover {
-            opacity: 0.8;
+            opacity: 0.75;
         }
         
-        /* Adjust unit-header layout for checkbox */
-        .unit-header {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 8px;
-            align-items: center;
-        }
-        
-        /* Make popup content wider and nicer */
-        .mapboxgl-popup-content {
-            padding: 18px;
-            min-width: 280px;
-            max-width: 360px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .mapboxgl-popup-close-button {
-            font-size: 20px;
-            padding: 5px 10px;
-            color: #666;
-        }
-        
-        .mapboxgl-popup-close-button:hover {
-            background-color: #f5f5f5;
-            color: #333;
+        .unit-visited .unit-rent {
+            text-decoration: line-through;
+            opacity: 0.7;
         }
         
         .loading {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background: var(--neutral-50);
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
             z-index: 1;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease-out;
+            color: var(--neutral-800);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--neutral-200);
+            border-top-color: var(--primary-500);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         .legend {
             position: absolute;
             bottom: 30px;
             right: 10px;
-            background: white;
+            background: var(--neutral-50);
             padding: 15px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
             z-index: 1;
             font-size: 12px;
+            animation: slideInUp 0.4s ease-out 0.2s both;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .legend-title {
-            font-weight: bold;
+            font-weight: 600;
             margin-bottom: 8px;
+            color: var(--neutral-800);
         }
         
         .legend-item {
@@ -355,11 +495,816 @@
             border-radius: 50%;
             margin-right: 8px;
         }
+        
+        #logout-button {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+        }
+        
+        #logout-button:hover {
+            background-color: #c82333;
+        }
+        
+        /* Clickable address header */
+        .popup-address-header {
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .popup-address-header:hover {
+            color: #00796B;
+            text-decoration: underline;
+        }
+        
+        /* Popup footer */
+        .popup-footer {
+            padding: 12px 18px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        
+        /* Compact directions button */
+        .directions-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+        }
+        
+        .directions-button:hover {
+            background: var(--primary-600);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Filter Bar Styles */
+        .filter-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--neutral-50);
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+            transition: transform var(--transition-base);
+            border-bottom: 1px solid var(--neutral-200);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-bar {
+                border-bottom: 1px solid rgba(157, 141, 247, 0.3);
+                background: linear-gradient(to bottom, var(--neutral-50) 0%, var(--neutral-50) 95%, rgba(157, 141, 247, 0.05) 100%);
+            }
+        }
+        
+        .filter-bar.collapsed {
+            transform: translateY(-100%);
+        }
+        
+        .filter-toggle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--neutral-50);
+            border: none;
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            padding: 8px 20px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neutral-700);
+            transition: all var(--transition-fast);
+            z-index: 11;
+            font-family: var(--font-sans);
+        }
+        
+        .filter-toggle:hover {
+            background: var(--neutral-50);
+            color: var(--primary-600);
+        }
+        
+        .filter-toggle.active {
+            top: 60px;
+        }
+        
+        .filter-content {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--neutral-700);
+            white-space: nowrap;
+        }
+        
+        .price-separator {
+            color: var(--neutral-500);
+            font-weight: 500;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .price-separator {
+                color: #b0b0d0;
+                font-weight: 600;
+            }
+        }
+        
+        .filter-input {
+            padding: 6px 12px;
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            transition: border-color var(--transition-fast);
+            width: 100px;
+            background-color: var(--neutral-100);
+            color: var(--neutral-800);
+        }
+        
+        .filter-input::placeholder {
+            color: var(--neutral-500);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-input::placeholder {
+                color: #a0a0c0;
+            }
+        }
+        
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+        }
+        
+        .filter-input.small {
+            width: 80px;
+        }
+        
+        .filter-select {
+            padding: 6px 12px;
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            background-color: var(--neutral-100);
+            color: var(--neutral-800);
+            cursor: pointer;
+            transition: border-color var(--transition-fast);
+            min-width: 120px;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+        }
+        
+        .filter-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .filter-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .filter-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--neutral-300);
+            transition: var(--transition-base);
+            border-radius: 24px;
+        }
+        
+        .filter-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: var(--transition-base);
+            border-radius: 50%;
+        }
+        
+        input:checked + .filter-slider {
+            background-color: var(--accent-500);
+        }
+        
+        input:checked + .filter-slider:before {
+            transform: translateX(20px);
+        }
+        
+        .filter-clear-btn {
+            padding: 6px 16px;
+            background: var(--neutral-100);
+            color: var(--neutral-700);
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+            margin-left: auto;
+        }
+        
+        .filter-clear-btn:hover {
+            background: var(--neutral-200);
+            border-color: var(--neutral-400);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-clear-btn {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: #6a6a8a;
+                color: var(--neutral-700);
+            }
+            
+            .filter-clear-btn:hover {
+                background: rgba(255, 255, 255, 0.12);
+                border-color: #7a7a9a;
+            }
+        }
+        
+        .filter-results-count {
+            font-size: 13px;
+            color: var(--neutral-600);
+            font-weight: 500;
+            padding: 4px 12px;
+            background: var(--neutral-100);
+            border-radius: var(--radius-sm);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-results-count {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--neutral-700);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+        
+        /* ============================================================
+           MOBILE RESPONSIVE STYLES
+           ============================================================ */
+        
+        /* Tablet (768px - 1023px) */
+        @media (max-width: 1023px) {
+            .filter-content {
+                gap: 12px;
+            }
+            
+            .filter-group {
+                gap: 6px;
+            }
+            
+            .filter-input,
+            .filter-select {
+                font-size: 13px;
+                padding: 5px 10px;
+            }
+            
+            .filter-input.small {
+                width: 70px;
+            }
+            
+            .filter-select {
+                min-width: 100px;
+            }
+        }
+        
+        /* Mobile (<768px) */
+        @media (max-width: 767px) {
+            /* Filter bar becomes bottom sheet */
+            .filter-bar {
+                top: auto;
+                bottom: 0;
+                max-height: 70vh;
+                overflow-y: auto;
+                border-radius: var(--radius-md) var(--radius-md) 0 0;
+                padding-top: 48px; /* Space for integrated toggle handle */
+            }
+            
+            .filter-bar.collapsed {
+                transform: translateY(100%);
+            }
+            
+            /* Toggle becomes integrated drawer handle when open */
+            .filter-toggle {
+                top: auto;
+                bottom: 0;
+                border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+                padding: 12px 24px;
+                font-size: 14px;
+                box-shadow: var(--shadow-md);
+                z-index: 12;
+            }
+            
+            .filter-toggle.active {
+                top: auto;
+                bottom: auto;
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                border-radius: 0;
+                box-shadow: none;
+                background: var(--neutral-50);
+                border-bottom: 1px solid var(--neutral-200);
+                width: 100%;
+                padding: 14px 24px;
+            }
+            
+            .filter-content {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+                padding: 20px;
+                padding-bottom: 24px;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            /* Keep price fields side-by-side on mobile */
+            .filter-group.price-group {
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .filter-group.price-group .filter-label {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            
+            .filter-group.price-group .filter-input.small {
+                flex: 1;
+                min-width: 80px;
+                max-width: 45%;
+            }
+            
+            .filter-group.price-group .price-separator {
+                flex-shrink: 0;
+            }
+            
+            .filter-label {
+                font-size: 14px;
+            }
+            
+            .filter-input,
+            .filter-select {
+                width: 100%;
+                min-width: 0;
+                padding: 10px 14px;
+                font-size: 16px; /* Prevents iOS zoom */
+            }
+            
+            /* Override for price inputs - keep them side-by-side */
+            .filter-input.small {
+                width: 100%;
+            }
+            
+            .filter-group.price-group .filter-input.small {
+                width: auto;
+            }
+            
+            .filter-clear-btn {
+                margin-left: 0;
+                padding: 12px 16px;
+                font-size: 14px;
+                width: 100%;
+                margin-top: 8px;
+            }
+            
+            .filter-results-count {
+                text-align: center;
+                padding: 10px 12px;
+                font-size: 14px;
+                order: -1; /* Move results count to top */
+                margin-bottom: 4px;
+            }
+            
+            /* Map adjustments */
+            #map.with-filters {
+                top: 0;
+                bottom: 60px;
+            }
+            
+            /* Legend becomes compact */
+            .legend {
+                bottom: 70px;
+                right: 10px;
+                padding: 10px;
+                font-size: 11px;
+            }
+            
+            .legend-title {
+                font-size: 12px;
+                margin-bottom: 6px;
+            }
+            
+            .legend-item {
+                margin-bottom: 3px;
+            }
+            
+            .legend-color {
+                width: 14px;
+                height: 14px;
+                margin-right: 6px;
+            }
+            
+            #logout-button {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+            
+            .legend {
+                animation-delay: 0.4s;
+            }
+            
+            /* Loading indicator */
+            .loading {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            
+            /* Popup adjustments */
+            .mapboxgl-popup-content {
+                min-width: 260px;
+                max-width: calc(100vw - 40px);
+                max-height: calc(100vh - 120px);
+            }
+            
+            .popup-header {
+                padding: 14px 16px;
+            }
+            
+            .popup-address-header {
+                font-size: 16px;
+            }
+            
+            .popup-units-container {
+                padding: 10px 16px;
+                max-height: 220px;
+            }
+            
+            .unit-card {
+                padding: 12px;
+            }
+            
+            .unit-rent {
+                font-size: 22px;
+            }
+            
+            .popup-footer {
+                padding: 10px 16px;
+            }
+            
+            .directions-button {
+                padding: 12px 16px;
+                font-size: 15px;
+            }
+            
+            /* Touch-friendly sizing */
+            .visited-checkbox-label {
+                padding: 6px 10px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .visited-checkbox {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .filter-toggle-switch {
+                width: 50px;
+                height: 28px;
+            }
+            
+            .filter-slider:before {
+                height: 22px;
+                width: 22px;
+            }
+            
+            input:checked + .filter-slider:before {
+                transform: translateX(22px);
+            }
+        }
+        
+        /* Small mobile (<480px) */
+        @media (max-width: 479px) {
+            .popup-address-header {
+                font-size: 15px;
+            }
+            
+            .address-summary {
+                font-size: 12px;
+                flex-wrap: wrap;
+            }
+            
+            .unit-rent {
+                font-size: 20px;
+            }
+            
+            .unit-details {
+                font-size: 13px;
+            }
+            
+            .unit-info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            
+            .legend {
+                padding: 8px;
+                font-size: 10px;
+            }
+            
+            .legend-title {
+                font-size: 11px;
+            }
+        }
+        
+        /* Login page mobile */
+        @media (max-width: 767px) {
+            .login-container {
+                padding: 32px 24px;
+                max-width: calc(100vw - 40px);
+                margin: 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 28px;
+            }
+            
+            .form-input {
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 12px 14px;
+            }
+            
+            .form-input[type="password"],
+            .form-input[type="text"].password-input {
+                padding-right: 60px;
+            }
+        }
+        
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        
+        .toast {
+            background: var(--neutral-50);
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toastSlideIn 0.3s ease-out;
+            pointer-events: all;
+        }
+        
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .toast.toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .toast.toast-info {
+            border-left: 4px solid var(--primary-500);
+        }
+        
+        .toast.toast-error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--neutral-800);
+            margin-bottom: 2px;
+        }
+        
+        .toast-message {
+            font-size: 13px;
+            color: var(--neutral-600);
+            line-height: 1.4;
+        }
+        
+        .toast-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .toast-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            font-family: var(--font-sans);
+        }
+        
+        .toast-btn-primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .toast-btn-primary:hover {
+            background: var(--primary-600);
+        }
+        
+        .toast-btn-secondary {
+            background: var(--neutral-200);
+            color: var(--neutral-700);
+        }
+        
+        .toast-btn-secondary:hover {
+            background: var(--neutral-300);
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: var(--neutral-500);
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+            flex-shrink: 0;
+        }
+        
+        .toast-close:hover {
+            background: var(--neutral-100);
+            color: var(--neutral-700);
+        }
+        
+        @media (max-width: 767px) {
+            .toast-container {
+                top: auto;
+                bottom: 80px;
+                left: 10px;
+                right: 10px;
+            }
+            
+            .toast {
+                min-width: 0;
+                max-width: none;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+    
+    <!-- Filter Bar -->
+    <button class="filter-toggle" onclick="toggleFilters()">
+        ▲ Filters
+    </button>
+    
+    <div class="filter-bar collapsed" id="filter-bar">
+        <div class="filter-content">
+            <div class="filter-group price-group">
+                <label class="filter-label">Price:</label>
+                <input type="number" id="filter-price-min" class="filter-input small" placeholder="Min" min="0" step="100">
+                <span class="price-separator">–</span>
+                <input type="number" id="filter-price-max" class="filter-input small" placeholder="Max" min="0" step="100">
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Beds:</label>
+                <select id="filter-beds" class="filter-select">
+                    <option value="">Any</option>
+                    <option value="0">Studio</option>
+                    <option value="1">1 Bed</option>
+                    <option value="2">2 Beds</option>
+                    <option value="3">3+ Beds</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">New Only:</label>
+                <label class="filter-toggle-switch">
+                    <input type="checkbox" id="filter-new-only">
+                    <span class="filter-slider"></span>
+                </label>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Source:</label>
+                <select id="filter-source" class="filter-select">
+                    <option value="">All Sources</option>
+                </select>
+            </div>
+            
+            <div class="filter-results-count" id="filter-results-count">
+                0 listings
+            </div>
+            
+            <button class="filter-clear-btn" onclick="clearFilters()">
+                Clear All
+            </button>
+        </div>
+    </div>
+    
     <div id="map"></div>
-    <div id="loading" class="loading">Loading listings...</div>
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <span>Loading listings...</span>
+    </div>
     
     <div class="legend">
         <div class="legend-title">Listing Status</div>
@@ -371,19 +1316,8 @@
             <div class="legend-color" style="background-color: #37474F;"></div>
             <span>Existing Listing</span>
         </div>
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-            <button id="logout-button" onclick="handleLogout()" style="
-                width: 100%;
-                padding: 8px 12px;
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: background-color 0.2s;
-            ">
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--neutral-300);">
+            <button id="logout-button" onclick="handleLogout()">
                 Logout
             </button>
         </div>
@@ -590,23 +1524,38 @@
         
         function showTimeoutWarning() {
             const remainingMinutes = Math.floor(TIMEOUT_WARNING_MS / 60000);
-            const warning = confirm(
-                `Your session will expire in ${remainingMinutes} minutes due to inactivity.\n\n` +
-                `Click OK to stay logged in, or Cancel to logout now.`
-            );
             
-            if (warning) {
-                // User wants to stay - reset the timeout
-                resetSessionTimeout();
-            } else {
-                // User chose to logout
-                handleLogout();
-            }
+            const toast = showToast(
+                'Session Expiring Soon',
+                `Your session will expire in ${remainingMinutes} minutes due to inactivity.`,
+                'warning',
+                [
+                    {
+                        label: 'Stay Logged In',
+                        type: 'primary',
+                        onclick: 'resetSessionTimeout(); this.closest(\'.toast\').remove();'
+                    },
+                    {
+                        label: 'Logout Now',
+                        type: 'secondary',
+                        onclick: 'handleLogout();'
+                    }
+                ],
+                0 // Don't auto-dismiss
+            );
         }
         
         async function handleInactivityLogout() {
-            alert('Your session has expired due to inactivity. You will be redirected to the login page.');
-            await handleLogout();
+            showToast(
+                'Session Expired',
+                'Your session has expired due to inactivity. Redirecting to login...',
+                'error',
+                null,
+                3000
+            );
+            setTimeout(async () => {
+                await handleLogout();
+            }, 3000);
         }
         
         // Track user activity to reset timeout
@@ -643,12 +1592,198 @@
         // Initialize Mapbox map
         mapboxgl.accessToken = MAPBOX_TOKEN;
         
+        // Detect dark mode preference
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+        const getMapStyle = (isDark) => isDark 
+            ? 'mapbox://styles/mapbox/dark-v11' 
+            : 'mapbox://styles/mapbox/light-v11';
+        
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
+            style: getMapStyle(prefersDarkMode.matches),
             center: [-73.9654, 40.7829], // Manhattan, NYC
             zoom: 12.5
         });
+        
+        // Listen for dark mode changes
+        prefersDarkMode.addEventListener('change', (e) => {
+            map.setStyle(getMapStyle(e.matches));
+        });
+        
+        // ============================================================
+        // TOAST NOTIFICATION SYSTEM
+        // ============================================================
+        function showToast(title, message, type = 'info', actions = null, duration = 5000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            const icons = {
+                info: 'ℹ️',
+                warning: '⚠️',
+                error: '❌',
+                success: '✅'
+            };
+            
+            let actionsHtml = '';
+            if (actions && actions.length > 0) {
+                actionsHtml = '<div class="toast-actions">';
+                actions.forEach(action => {
+                    actionsHtml += `<button class="toast-btn toast-btn-${action.type || 'secondary'}" onclick="${action.onclick}">${action.label}</button>`;
+                });
+                actionsHtml += '</div>';
+            }
+            
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || icons.info}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                    ${actionsHtml}
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto-remove after duration (unless actions are present)
+            if (!actions && duration > 0) {
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.style.animation = 'toastSlideIn 0.3s ease-out reverse';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, duration);
+            }
+            
+            return toast;
+        }
+        
+        // ============================================================
+        // FILTER STATE AND FUNCTIONS
+        // ============================================================
+        let originalGeoJSON = null;
+        let allSources = new Set();
+        
+        function toggleFilters() {
+            const filterBar = document.getElementById('filter-bar');
+            const filterToggle = document.querySelector('.filter-toggle');
+            const mapElement = document.getElementById('map');
+            
+            filterBar.classList.toggle('collapsed');
+            filterToggle.classList.toggle('active');
+            mapElement.classList.toggle('with-filters');
+            
+            // Update toggle text
+            // Collapsed = closed (show up arrow to open upward on mobile)
+            // Not collapsed = open (show down arrow to close downward on mobile)
+            if (filterBar.classList.contains('collapsed')) {
+                filterToggle.textContent = '▲ Filters';
+            } else {
+                filterToggle.textContent = '▼ Filters';
+            }
+        }
+        
+        function clearFilters() {
+            document.getElementById('filter-price-min').value = '';
+            document.getElementById('filter-price-max').value = '';
+            document.getElementById('filter-beds').value = '';
+            document.getElementById('filter-new-only').checked = false;
+            document.getElementById('filter-source').value = '';
+            
+            applyFilters();
+        }
+        
+        function parseRent(rentStr) {
+            if (!rentStr) return 0;
+            // Remove $ and commas, parse as number
+            const cleaned = String(rentStr).replace(/[$,]/g, '');
+            return parseFloat(cleaned) || 0;
+        }
+        
+        function applyFilters() {
+            if (!originalGeoJSON) return;
+            
+            const priceMin = document.getElementById('filter-price-min').value;
+            const priceMax = document.getElementById('filter-price-max').value;
+            const bedsFilter = document.getElementById('filter-beds').value;
+            const newOnlyFilter = document.getElementById('filter-new-only').checked;
+            const sourceFilter = document.getElementById('filter-source').value;
+            
+            // Filter features
+            const filteredFeatures = originalGeoJSON.features.filter(feature => {
+                const units = feature.properties.units;
+                
+                // Filter units within each feature
+                const matchingUnits = units.filter(unit => {
+                    // Price filter
+                    if (priceMin || priceMax) {
+                        const rent = parseRent(unit.rent);
+                        if (priceMin && rent < parseFloat(priceMin)) return false;
+                        if (priceMax && rent > parseFloat(priceMax)) return false;
+                    }
+                    
+                    // Beds filter
+                    if (bedsFilter !== '') {
+                        const beds = parseInt(unit.bed) || 0;
+                        const filterBeds = parseInt(bedsFilter);
+                        if (filterBeds === 3) {
+                            // 3+ beds
+                            if (beds < 3) return false;
+                        } else {
+                            if (beds !== filterBeds) return false;
+                        }
+                    }
+                    
+                    // New only filter
+                    if (newOnlyFilter && unit.status !== 'addition') {
+                        return false;
+                    }
+                    
+                    // Source filter
+                    if (sourceFilter && unit.source !== sourceFilter) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // If no units match, exclude this feature
+                if (matchingUnits.length === 0) return false;
+                
+                // Update feature with filtered units
+                feature.properties.units = matchingUnits;
+                feature.properties.unitCount = matchingUnits.length;
+                feature.properties.newAdditionCount = matchingUnits.filter(u => u.status === 'addition').length;
+                feature.properties.status = matchingUnits.some(u => u.status === 'addition') ? 'addition' : 'existing';
+                
+                return true;
+            });
+            
+            // Update map
+            const filteredGeoJSON = {
+                type: 'FeatureCollection',
+                features: filteredFeatures
+            };
+            
+            if (map.getSource('listings')) {
+                map.getSource('listings').setData(filteredGeoJSON);
+            }
+            
+            // Update results count
+            const totalUnits = filteredFeatures.reduce((sum, f) => sum + f.properties.unitCount, 0);
+            document.getElementById('filter-results-count').textContent = 
+                `${filteredFeatures.length} ${filteredFeatures.length === 1 ? 'address' : 'addresses'} · ${totalUnits} ${totalUnits === 1 ? 'unit' : 'units'}`;
+        }
+        
+        // Attach filter event listeners
+        function setupFilterListeners() {
+            document.getElementById('filter-price-min').addEventListener('input', applyFilters);
+            document.getElementById('filter-price-max').addEventListener('input', applyFilters);
+            document.getElementById('filter-beds').addEventListener('change', applyFilters);
+            document.getElementById('filter-new-only').addEventListener('change', applyFilters);
+            document.getElementById('filter-source').addEventListener('change', applyFilters);
+        }
         
         // Helper function to escape HTML attribute values
         function escapeHtmlAttr(str) {
@@ -668,15 +1803,19 @@
             const unitCount = properties.unitCount || units.length;
             const newAdditionCount = properties.newAdditionCount || 0;
             
-            // Address header
-            let html = `<div class="popup-address-header">${address}</div>`;
+            // Popup header
+            const mapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address + ', New York, NY')}`;
+            let html = '<div class="popup-header">';
+            html += `<a href="${mapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="popup-address-header" aria-label="View ${address} on Google Maps">📍 ${address}</a>`;
             
-            // Summary badge
-            const summaryClass = newAdditionCount > 0 ? 'address-summary address-summary-highlight' : 'address-summary';
-            const summaryText = unitCount === 1 
-                ? '1 unit' 
-                : `${unitCount} units${newAdditionCount > 0 ? ' · ' + newAdditionCount + ' new' : ''}`;
-            html += `<div class="${summaryClass}">${summaryText}</div>`;
+            // Summary
+            html += '<div class="address-summary">';
+            html += `<span>${unitCount} ${unitCount === 1 ? 'unit' : 'units'}</span>`;
+            if (newAdditionCount > 0) {
+                html += `<span class="address-summary-highlight">${newAdditionCount} new</span>`;
+            }
+            html += '</div>';
+            html += '</div>'; // Close popup-header
             
             // Units container
             html += '<div class="popup-units-container">';
@@ -719,36 +1858,35 @@
                 const safeAddress = escapeHtmlAttr(address);
                 const safeUnit = escapeHtmlAttr(unit.unit || '');
                 
-                // Format contact information (if available)
-                let contactHtml = '';
+                // Build contact info section
+                let contactInfoHtml = '';
+                const contactItems = [];
+                
+                if (unit.contactName) {
+                    const safeContactName = escapeHtmlAttr(unit.contactName);
+                    contactItems.push(`<span class="unit-info-item"><span class="unit-contact-name">👤 ${safeContactName}</span></span>`);
+                }
+                
                 if (unit.contact) {
                     const contact = String(unit.contact);
-                    // Check if contact is a phone number (has digits)
                     const hasPhone = /\d{3}[-.\s]?\d{3,4}[-.\s]?\d{4}|\d{3}[-.\s]?\d{4}/.test(contact);
                     if (hasPhone) {
-                        // Extract just the phone number for tel: link
                         const phoneDigits = contact.replace(/[^\d]/g, '');
                         const safeContact = escapeHtmlAttr(contact);
-                        contactHtml = `<div class="unit-contact">📞 <a href="tel:${phoneDigits}">${safeContact}</a></div>`;
+                        contactItems.push(`<span class="unit-info-item"><span class="unit-contact">📞 <a href="tel:${phoneDigits}">${safeContact}</a></span></span>`);
                     } else {
-                        // Just display text (e.g., "Baltic Redzep")
                         const safeContact = escapeHtmlAttr(contact);
-                        contactHtml = `<div class="unit-contact">📞 ${safeContact}</div>`;
+                        contactItems.push(`<span class="unit-info-item"><span class="unit-contact">📞 ${safeContact}</span></span>`);
                     }
                 }
                 
-                // Format contact name (if available)
-                let contactNameHtml = '';
-                if (unit.contactName) {
-                    const safeContactName = escapeHtmlAttr(unit.contactName);
-                    contactNameHtml = `<div class="unit-contact-name">👤 ${safeContactName}</div>`;
-                }
-                
-                // Format keys access (if available)
-                let keysHtml = '';
                 if (unit.keysAccess) {
                     const safeKeysAccess = escapeHtmlAttr(unit.keysAccess);
-                    keysHtml = `<div class="unit-keys">🔑 ${safeKeysAccess}</div>`;
+                    contactItems.push(`<span class="unit-info-item"><span class="unit-keys">🔑 ${safeKeysAccess}</span></span>`);
+                }
+                
+                if (contactItems.length > 0) {
+                    contactInfoHtml = `<div class="unit-contact-info"><div class="unit-info-row">${contactItems.join('')}</div></div>`;
                 }
                 
                 html += `
@@ -769,15 +1907,23 @@
                         <div class="unit-details">
                             ${bedText} · ${bathText}
                         </div>
-                        ${contactNameHtml}
-                        ${contactHtml}
-                        ${keysHtml}
+                        ${contactInfoHtml}
                         <div class="unit-source">Source: ${source}</div>
                     </div>
                 `;
             });
             
-            html += '</div>';
+            html += '</div>'; // Close popup-units-container
+            
+            // Add footer with directions button
+            const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + ', New York, NY')}&travelmode=transit`;
+            html += '<div class="popup-footer">';
+            html += `
+                <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" class="directions-button" aria-label="Get directions to ${address}">
+                    🧭 Get Directions
+                </a>
+            `;
+            html += '</div>'; // Close popup-footer
             
             return html;
         }
@@ -874,7 +2020,29 @@
                     features: features
                 };
                 
+                // Store original GeoJSON for filtering
+                originalGeoJSON = JSON.parse(JSON.stringify(geojson));
+                
+                // Populate source filter dropdown
+                const sourceSelect = document.getElementById('filter-source');
+                geojson.features.forEach(feature => {
+                    feature.properties.units.forEach(unit => {
+                        if (unit.source) allSources.add(unit.source);
+                    });
+                });
+                
+                // Sort sources and add to dropdown
+                Array.from(allSources).sort().forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source;
+                    option.textContent = source;
+                    sourceSelect.appendChild(option);
+                });
+                
                 console.log('GeoJSON built:', geojson);
+                
+                // Setup filter listeners
+                setupFilterListeners();
                 
                 // Function to add data to map
                 const addDataToMap = () => {
@@ -926,7 +2094,8 @@
                         }
                         
                         new mapboxgl.Popup({
-                            maxWidth: '350px'
+                            maxWidth: '360px',
+                            anchor: 'bottom'
                         })
                             .setLngLat(coordinates)
                             .setHTML(createMultiUnitPopupContent(properties))
@@ -942,8 +2111,18 @@
                         map.getCanvas().style.cursor = '';
                     });
                     
-                        // Hide loading indicator
-                        document.getElementById('loading').style.display = 'none';
+                        // Hide loading indicator with fade out
+                        const loadingEl = document.getElementById('loading');
+                        loadingEl.style.opacity = '0';
+                        loadingEl.style.transition = 'opacity 0.3s ease-out';
+                        setTimeout(() => {
+                            loadingEl.style.display = 'none';
+                        }, 300);
+                        
+                        // Update initial filter count
+                        const totalUnits = geojson.features.reduce((sum, f) => sum + f.properties.unitCount, 0);
+                        document.getElementById('filter-results-count').textContent = 
+                            `${geojson.features.length} ${geojson.features.length === 1 ? 'address' : 'addresses'} · ${totalUnits} ${totalUnits === 1 ? 'unit' : 'units'}`;
                         
                         console.log(`Successfully loaded ${data.length} listings on map`);
                     } catch (err) {

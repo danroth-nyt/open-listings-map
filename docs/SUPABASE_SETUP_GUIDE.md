@@ -212,5 +212,90 @@ After completing these manual steps:
 3. Test the logout button works
 4. Share credentials with team members
 
-If you need to add more users later, just repeat Step 2.
+If you need to add more users later, just repeat Step 3.
+
+---
+
+## Additional Features Setup
+
+### Google Maps Integration (Already Configured)
+
+The map includes Google Maps integration for:
+- Clickable addresses (opens Google Maps search)
+- "Get Directions" button (transit routing)
+
+**No additional setup required** - these features use client-side links to Google Maps.
+
+### Dark Mode (Automatic)
+
+The application automatically detects and adapts to your system's dark mode preference:
+- Light mode: Clean, bright interface
+- Dark mode: Optimized colors for low-light viewing
+- Popups: Always light theme for maximum readability
+
+**No configuration needed** - works automatically based on OS settings.
+
+### Filtering System (Built-in)
+
+Users can filter listings by:
+- Price range (min/max)
+- Number of bedrooms
+- New listings only
+- Data source
+
+**No setup required** - filters work automatically with your data.
+
+---
+
+## Maintenance Tasks
+
+### Regular Maintenance
+
+1. **Review User Access**
+   - Periodically check Authentication > Users
+   - Remove accounts for departed team members
+   - Add accounts for new team members
+
+2. **Monitor Failed Logins**
+   - Check Authentication > Logs for suspicious activity
+   - Look for repeated failed login attempts
+   - Consider IP blocking if needed
+
+3. **Clean Up Visited Units** (Optional)
+   - Run cleanup function to remove old records:
+   ```sql
+   SELECT cleanup_old_visited_units();
+   ```
+   - This removes records older than 6 months
+   - Run monthly or as needed
+
+4. **Update Geocoding Cache**
+   - GitHub Actions runs daily automatically
+   - Check Actions tab for failed runs
+   - Manually trigger if needed
+
+### Updating the Application
+
+When deploying new versions:
+
+1. **Test in Development First**
+   - Make changes on feature branch
+   - Test thoroughly with test account
+   - Verify all features still work
+
+2. **Deploy to Production**
+   - Merge to main branch (via pull request)
+   - No database changes needed (unless schema updates)
+   - Users will see changes on next page refresh
+
+3. **Notify Team** (if major changes)
+   - Send email about new features
+   - Update internal documentation
+   - Provide training if UI changes significantly
+
+---
+
+**Last Updated**: December 27, 2025  
+**Version**: 2.0  
+**Status**: ✅ Complete with Additional Features
 
