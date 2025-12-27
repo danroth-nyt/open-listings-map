@@ -51,6 +51,31 @@
             --transition-slow: 300ms ease;
         }
         
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark mode colors */
+                --primary-600: #8b7dff;
+                --primary-500: #9d8df7;
+                --accent-500: #26d9a6;
+                --accent-600: #00d9a3;
+                --neutral-50: #1a1a2e;
+                --neutral-100: #25243d;
+                --neutral-200: #353452;
+                --neutral-300: #4a4a6a;
+                --neutral-400: #626280;
+                --neutral-500: #8a8aa8;
+                --neutral-600: #b8b8d0;
+                --neutral-700: #d0d0e8;
+                --neutral-800: #e8e8f5;
+                --neutral-900: #ffffff;
+                
+                /* Dark mode shadows - lighter/glow effect */
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+                --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+            }
+        }
+        
         * {
             box-sizing: border-box;
         }
@@ -69,6 +94,12 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             position: relative;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #4a3d8f 0%, #5a2d6e 100%);
+            }
         }
         
         body::before {
@@ -92,7 +123,12 @@
             animation: slideIn 0.3s ease-out;
             position: relative;
             z-index: 1;
-            color-scheme: light;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .login-container {
+                background: var(--neutral-100);
+            }
         }
         
         @keyframes slideIn {
@@ -147,7 +183,7 @@
             font-size: 15px;
             transition: all var(--transition-base);
             font-family: inherit;
-            background-color: white;
+            background-color: var(--neutral-50);
             color: var(--neutral-800);
         }
         

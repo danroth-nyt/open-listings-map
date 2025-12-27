@@ -61,6 +61,37 @@
             --transition-slow: 300ms ease;
         }
         
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark mode colors */
+                --primary-600: #8b7dff;
+                --primary-500: #9d8df7;
+                --accent-500: #26d9a6;
+                --accent-600: #00d9a3;
+                --neutral-50: #1a1a2e;
+                --neutral-100: #25243d;
+                --neutral-200: #353452;
+                --neutral-300: #4a4a6a;
+                --neutral-400: #626280;
+                --neutral-500: #8a8aa8;
+                --neutral-600: #b8b8d0;
+                --neutral-700: #d0d0e8;
+                --neutral-800: #e8e8f5;
+                --neutral-900: #ffffff;
+                
+                /* Status Colors for dark mode */
+                --status-new: #00E676;
+                --status-new-bg: #1a3d2e;
+                --status-new-dark: #00E676;
+                --status-existing: #b8b8d0;
+                
+                /* Dark mode shadows - lighter/glow effect */
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+                --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+            }
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -192,7 +223,7 @@
         .unit-card {
             padding: 14px;
             margin-bottom: 12px;
-            background-color: white;
+            background-color: var(--neutral-100);
             border: 1px solid var(--neutral-200);
             border-left: 3px solid var(--neutral-400);
             border-radius: var(--radius-sm);
@@ -368,7 +399,7 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            background: white;
+            background: var(--neutral-50);
             padding: 12px 20px;
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow-md);
@@ -378,6 +409,7 @@
             align-items: center;
             gap: 10px;
             animation: slideInRight 0.3s ease-out;
+            color: var(--neutral-800);
         }
         
         @keyframes slideInRight {
@@ -408,7 +440,7 @@
             position: absolute;
             bottom: 30px;
             right: 10px;
-            background: white;
+            background: var(--neutral-50);
             padding: 15px;
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow-md);
@@ -501,11 +533,10 @@
             top: 0;
             left: 0;
             right: 0;
-            background: white;
+            background: var(--neutral-50);
             box-shadow: var(--shadow-md);
             z-index: 10;
             transition: transform var(--transition-base);
-            color-scheme: light;
         }
         
         .filter-bar.collapsed {
@@ -517,7 +548,7 @@
             top: 0;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: var(--neutral-50);
             border: none;
             border-radius: 0 0 var(--radius-sm) var(--radius-sm);
             padding: 8px 20px;
@@ -569,7 +600,7 @@
             font-family: var(--font-sans);
             transition: border-color var(--transition-fast);
             width: 100px;
-            background-color: white;
+            background-color: var(--neutral-100);
             color: var(--neutral-800);
         }
         
@@ -592,7 +623,7 @@
             border-radius: var(--radius-sm);
             font-size: 14px;
             font-family: var(--font-sans);
-            background-color: white;
+            background-color: var(--neutral-100);
             color: var(--neutral-800);
             cursor: pointer;
             transition: border-color var(--transition-fast);
@@ -958,7 +989,7 @@
         }
         
         .toast {
-            background: white;
+            background: var(--neutral-50);
             padding: 16px 20px;
             border-radius: var(--radius-sm);
             box-shadow: var(--shadow-lg);
@@ -1446,11 +1477,22 @@
         // Initialize Mapbox map
         mapboxgl.accessToken = MAPBOX_TOKEN;
         
+        // Detect dark mode preference
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+        const getMapStyle = (isDark) => isDark 
+            ? 'mapbox://styles/mapbox/dark-v11' 
+            : 'mapbox://styles/mapbox/light-v11';
+        
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
+            style: getMapStyle(prefersDarkMode.matches),
             center: [-73.9654, 40.7829], // Manhattan, NYC
             zoom: 12.5
+        });
+        
+        // Listen for dark mode changes
+        prefersDarkMode.addEventListener('change', (e) => {
+            map.setStyle(getMapStyle(e.matches));
         });
         
         // ============================================================
