@@ -355,6 +355,43 @@
             border-radius: 50%;
             margin-right: 8px;
         }
+        
+        /* Clickable address header */
+        .popup-address-header {
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .popup-address-header:hover {
+            color: #00796B;
+            text-decoration: underline;
+        }
+        
+        /* Compact directions button */
+        .directions-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            margin-top: 12px;
+            background: #E8F5E9;
+            color: #1B5E20;
+            border: 1px solid #A5D6A7;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .directions-button:hover {
+            background: #C8E6C9;
+        }
     </style>
 </head>
 <body>
@@ -668,8 +705,9 @@
             const unitCount = properties.unitCount || units.length;
             const newAdditionCount = properties.newAdditionCount || 0;
             
-            // Address header
-            let html = `<div class="popup-address-header">${address}</div>`;
+            // Address header - clickable link to Google Maps
+            const mapsSearchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address + ', New York, NY')}`;
+            let html = `<a href="${mapsSearchUrl}" target="_blank" rel="noopener noreferrer" class="popup-address-header" aria-label="View ${address} on Google Maps">📍 ${address}</a>`;
             
             // Summary badge
             const summaryClass = newAdditionCount > 0 ? 'address-summary address-summary-highlight' : 'address-summary';
@@ -778,6 +816,14 @@
             });
             
             html += '</div>';
+            
+            // Add directions button below the units container
+            const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + ', New York, NY')}&travelmode=transit`;
+            html += `
+                <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" class="directions-button" aria-label="Get directions to ${address}">
+                    🧭 Get Directions
+                </a>
+            `;
             
             return html;
         }
