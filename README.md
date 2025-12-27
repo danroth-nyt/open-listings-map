@@ -78,18 +78,47 @@ See [`docs/SUPABASE_SETUP_GUIDE.md`](docs/SUPABASE_SETUP_GUIDE.md) for detailed 
 
 ## Features
 
+### Core Functionality
 - **Intelligent Addition Detection**: Automatically identifies new listings by comparing Rank 1 (latest) vs Rank 2 (previous) data per source
 - **Efficient Geocoding**: Python script caches geocoded addresses with normalized keys to minimize Google Maps API costs
 - **Automated Workflow**: GitHub Actions runs geocoding daily after Make.com uploads new data
-- **Interactive Map**: Mapbox GL JS displays listings with:
-  - 🟢 Green markers for new additions
-  - ⚫ Dark grey markers for existing listings
-  - Detailed popups with address, unit, rent, bed/bath, contact info, key access, and source
-- **Visited Units Tracking**: Per-user persistent checkboxes to track which units you've visited
+
+### Interactive Map (Mapbox GL JS)
+- **Responsive Dark Mode**: Automatically adapts to system preferences (light/dark) with optimized color schemes
+- **Smart Markers**: 
+  - 🟢 Green (#00E676) for new additions
+  - ⚫ Dark grey (#37474F) for existing listings
+  - Zoom-responsive sizing for better visibility
+- **Rich Popups**: Click any marker to see:
+  - Clickable address (opens Google Maps search)
+  - Unit number with NEW badge for additions
+  - Rent, bedrooms, bathrooms
+  - Contact name (Super, Doorman, etc.) with 👤 icon
+  - Phone number (clickable tel: link) with 📞 icon
+  - Key access instructions with 🔑 icon
+  - Visited checkbox for tracking
+  - Data source
+  - Compact "Get Directions" button (opens Google Maps transit directions)
+
+### Advanced Features
+- **Real-time Filtering**:
+  - Price range (min/max)
+  - Number of bedrooms (Studio, 1, 2, 3+)
+  - New listings only toggle
+  - Source filter (UWS, Solil, etc.)
+  - Live results count
+  - Collapsible filter bar (mobile: bottom sheet, desktop: top bar)
+- **Visited Units Tracking**: Per-user persistent state
   - Mark units as visited with a simple checkbox
   - State persists across sessions and devices indefinitely
   - Visited units are dimmed for easy visual identification
   - Secure per-user storage via Supabase with Row Level Security
+- **Modern UI/UX**:
+  - Beautiful serif typography (DM Serif Display + Source Sans 3)
+  - Smooth animations and transitions
+  - Touch-friendly mobile interface
+  - Optimized font loading (only weights actually used)
+  - Clean, accessible color palette
 
 ## Prerequisites
 
@@ -331,23 +360,41 @@ The script will:
 
 ### Viewing the Map
 
-Open `map.html` in any web browser. The map will:
+1. **Login**: Navigate to `index.html` and sign in with your credentials
+2. **Explore**: The map automatically loads with all features:
 
-- Fetch pre-computed data from `marts.map_listings_geojson` view
-- Display interactive points:
+**Map Display:**
+- Automatically adapts to your system's light/dark mode preference
+- Interactive points with zoom-responsive sizing:
   - 🟢 **Green (#00E676)**: New additions (in Rank 1 but not in Rank 2)
   - ⚫ **Dark Grey (#37474F)**: Existing listings (in both Rank 1 and Rank 2)
-- Show detailed popups on click with:
-  - Address and unit number
-  - Status badge (NEW ADDITION or EXISTING)
-  - Rent amount
-  - Bed/bath counts
-  - Contact name (Super, Doorman, etc.) with person icon
-  - Phone number (clickable tel: link) with phone icon
-  - Key access instructions with key icon
-  - Visited checkbox for tracking
-  - Data source
-- Zoom-responsive marker sizing (larger at higher zoom levels)
+
+**Filter Listings:**
+- Click "▼ Filters" button to show/hide filter bar
+- Set price range (min/max)
+- Filter by bedrooms (Studio, 1, 2, 3+)
+- Toggle "New Only" to see just additions
+- Filter by source (UWS, Solil, etc.)
+- See live count of matching listings
+
+**View Details:**
+- Click any marker to see popup with:
+  - Clickable address (opens Google Maps)
+  - Unit number with NEW badge
+  - Rent, bedrooms, bathrooms
+  - Contact info (name, phone, keys access)
+  - Visited checkbox
+  - "Get Directions" button (transit directions)
+
+**Track Progress:**
+- Check "Visited" on units you've seen
+- Visited units are dimmed automatically
+- State persists across sessions
+
+**Mobile Experience:**
+- Filter bar appears as bottom sheet
+- Touch-optimized controls
+- Responsive layout adapts to screen size
 
 ## How the Addition Detection Works
 
@@ -598,6 +645,30 @@ When making changes:
 2. Commit changes to a feature branch
 3. Push to remote and create a pull request
 4. Do NOT push directly to main branch
+
+## Recent Updates
+
+### December 27, 2025
+- ✨ **Dark Mode UI Improvements**: Enhanced visibility with better contrast for inputs, labels, and controls in dark mode
+- 🎨 **Popup Readability**: Fixed popup cards to always use clean light theme colors for maximum readability
+- ⚡ **Performance**: Optimized font loading (removed unused weights 300, 500)
+- 🎯 **Code Quality**: Refactored logout button to use CSS hover instead of inline JavaScript
+- 📱 **Mobile UX**: Fixed price filter fields to display side-by-side on mobile instead of stacked
+
+### December 22-26, 2025
+- 🗺️ **Google Maps Integration**: Added clickable addresses and "Get Directions" button with transit routing
+- 🌓 **Dark Mode**: Implemented automatic OS preference detection with optimized color schemes
+- 🔍 **Advanced Filtering**: Real-time filters for price, bedrooms, new listings, and source
+- 📱 **Mobile Responsive**: Complete mobile optimization with bottom sheet filters and touch-friendly controls
+- 🎨 **Modern UI**: Beautiful typography, smooth animations, and professional design polish
+- 👤 **Contact Fields**: Extract and display contact names, phone numbers, and key access instructions
+- ✅ **Visited Units**: Per-user tracking with persistent checkboxes and dimmed styling
+
+### December 16, 2025
+- 🔐 **Security**: Supabase Authentication with Row Level Security
+- 🔑 **Login System**: Modern login page with "Remember me" and session management
+- ⏱️ **Auto-Logout**: 30-minute inactivity timeout with 2-minute warning
+- 📊 **Session Tracking**: Activity monitoring resets timeout automatically
 
 ## License
 

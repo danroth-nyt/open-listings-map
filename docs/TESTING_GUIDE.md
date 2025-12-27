@@ -541,3 +541,73 @@ Before deploying to production:
 
 **Security Reminder**: The Supabase Anon Key is safe to expose because RLS prevents data access. However, NEVER expose the Supabase Service Role Key.
 
+---
+
+## Test 11: UI/UX Features
+
+**Purpose**: Verify all modern UI features work correctly.
+
+### Steps:
+
+1. **Test Dark Mode**
+   - Open map in browser with light mode OS setting
+   - Verify light theme is active
+   - Switch OS to dark mode
+   - Refresh page
+   - Verify dark theme is active
+   - Check filter inputs have good contrast
+   - Verify popup cards remain light (for readability)
+
+2. **Test Filtering**
+   - Click "▼ Filters" to expand filter bar
+   - Set min price: 2000
+   - Set max price: 4000
+   - Verify results update in real-time
+   - Check results count updates
+   - Select "2 Beds" from dropdown
+   - Toggle "New Only" switch
+   - Select a source from dropdown
+   - Click "Clear All" - all filters reset
+
+3. **Test Mobile Responsiveness**
+   - Open DevTools (F12) → Toggle device toolbar
+   - Select iPhone or Android device
+   - Verify filter bar appears at bottom
+   - Check price inputs are side-by-side (not stacked)
+   - Verify touch targets are adequate size (44px+)
+   - Test filter expansion/collapse
+   - Check popup sizing on mobile
+
+4. **Test Google Maps Integration**
+   - Click a marker to open popup
+   - Click the address at top of popup
+   - Verify Google Maps opens in new tab with search
+   - Return to map
+   - Click "Get Directions" button
+   - Verify Google Maps opens with transit directions
+
+5. **Test Visited Units**
+   - Click a marker to open popup
+   - Check the "Visited" checkbox
+   - Close popup
+   - Reopen same unit
+   - Verify checkbox is still checked
+   - Verify unit card is dimmed
+   - Refresh page
+   - Verify visited state persists
+   - Uncheck the checkbox
+   - Verify dimming is removed
+
+### ✅ Test 11 Pass Criteria:
+- Dark mode switches automatically with OS preference
+- Filters work in real-time and update results count
+- Mobile layout is responsive and touch-friendly
+- Google Maps integration opens correct links
+- Visited units persist across sessions
+
+---
+
+**Last Updated**: December 27, 2025  
+**Version**: 2.0  
+**Status**: ✅ Complete with UI/UX Tests
+

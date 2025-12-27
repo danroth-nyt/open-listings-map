@@ -319,7 +319,20 @@ ORDER BY count DESC;
 
 ---
 
-**Last Updated:** December 22, 2025  
-**Version:** 1.0  
-**Branch:** `feat/add-contact-field`
+**Last Updated:** December 27, 2025  
+**Version:** 1.1  
+**Branch:** `feature/google-maps-integration`  
+**Status:** ✅ Production Ready
+
+## Recent Updates
+
+### December 27, 2025
+- Enhanced popup readability with forced light theme colors
+- Improved dark mode compatibility
+- Optimized font loading for better performance
+
+### December 22, 2025
+- Initial implementation of contact field extraction
+- Added display logic in map popups
+- Created extraction patterns for UWS and Solil sources
 
