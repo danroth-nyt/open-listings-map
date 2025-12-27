@@ -8,7 +8,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     
     <!-- Mapbox GL JS -->
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
@@ -494,6 +494,24 @@
             height: 16px;
             border-radius: 50%;
             margin-right: 8px;
+        }
+        
+        #logout-button {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: var(--font-sans);
+        }
+        
+        #logout-button:hover {
+            background-color: #c82333;
         }
         
         /* Clickable address header */
@@ -1282,19 +1300,7 @@
             <span>Existing Listing</span>
         </div>
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--neutral-300);">
-            <button id="logout-button" onclick="handleLogout()" style="
-                width: 100%;
-                padding: 8px 12px;
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                border-radius: var(--radius-sm);
-                font-size: 12px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all var(--transition-fast);
-                font-family: var(--font-sans);
-            " onmouseover="this.style.backgroundColor='#c82333'" onmouseout="this.style.backgroundColor='#dc3545'">
+            <button id="logout-button" onclick="handleLogout()">
                 Logout
             </button>
         </div>
