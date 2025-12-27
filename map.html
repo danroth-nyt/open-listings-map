@@ -80,15 +80,30 @@
                 --neutral-900: #ffffff;
                 
                 /* Status Colors for dark mode */
-                --status-new: #00E676;
-                --status-new-bg: #1a3d2e;
-                --status-new-dark: #00E676;
+                --status-new: #26d9a6;
+                --status-new-bg: rgba(38, 217, 166, 0.08);
+                --status-new-dark: #26d9a6;
                 --status-existing: #b8b8d0;
                 
                 /* Dark mode shadows - lighter/glow effect */
                 --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
                 --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
                 --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+            }
+            
+            /* Enhanced input/select visibility in dark mode */
+            .filter-input,
+            .filter-select {
+                border-color: #6a6a8a;
+                box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 
+                            inset 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
+            
+            .filter-input:focus,
+            .filter-select:focus {
+                border-color: var(--primary-500);
+                box-shadow: 0 0 0 1px rgba(157, 141, 247, 0.3), 
+                            inset 0 1px 2px rgba(0, 0, 0, 0.2);
             }
         }
         
@@ -132,6 +147,9 @@
             box-shadow: var(--shadow-lg);
             display: flex;
             flex-direction: column;
+            /* Force light theme for popup readability */
+            background: #ffffff;
+            color: #212529;
         }
         
         .mapboxgl-popup {
@@ -141,21 +159,21 @@
         .mapboxgl-popup-close-button {
             font-size: 20px;
             padding: 8px 12px;
-            color: var(--neutral-600);
+            color: #495057;
             transition: all var(--transition-fast);
             z-index: 10;
         }
         
         .mapboxgl-popup-close-button:hover {
-            background-color: var(--neutral-100);
-            color: var(--neutral-800);
+            background-color: #f1f3f5;
+            color: #212529;
         }
         
-        /* Multi-unit popup styles */
+        /* Multi-unit popup styles - forced light theme for readability */
         .popup-header {
-            background: var(--neutral-50);
+            background: #f8f9fa;
             padding: 16px 18px;
-            border-bottom: 1px solid var(--neutral-200);
+            border-bottom: 1px solid #e9ecef;
             flex-shrink: 0;
         }
         
@@ -164,7 +182,7 @@
             font-weight: 400;
             font-size: 18px;
             margin: 0 0 8px 0;
-            color: var(--neutral-800);
+            color: #212529;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -173,12 +191,12 @@
         }
         
         .popup-address-header:hover {
-            color: var(--accent-600);
+            color: #00796B;
         }
         
         .address-summary {
             font-size: 13px;
-            color: var(--neutral-600);
+            color: #495057;
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -186,12 +204,13 @@
         }
         
         .address-summary-highlight {
-            background-color: var(--status-new-bg);
-            color: var(--status-new-dark);
-            padding: 2px 8px;
+            background-color: #E8F5E9;
+            color: #00b894;
+            padding: 3px 8px;
             border-radius: var(--radius-sm);
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
+            border: 1px solid #00b894;
         }
         
         .popup-units-container {
@@ -200,6 +219,7 @@
             max-height: 250px;
             overflow-y: auto;
             padding: 12px 18px;
+            background: #ffffff;
         }
         
         /* Custom scrollbar for units container */
@@ -208,31 +228,31 @@
         }
         
         .popup-units-container::-webkit-scrollbar-track {
-            background: var(--neutral-100);
+            background: #f1f3f5;
         }
         
         .popup-units-container::-webkit-scrollbar-thumb {
-            background: var(--neutral-400);
+            background: #ced4da;
             border-radius: 4px;
         }
         
         .popup-units-container::-webkit-scrollbar-thumb:hover {
-            background: var(--neutral-500);
+            background: #adb5bd;
         }
         
         .unit-card {
-            padding: 14px;
+            padding: 16px;
             margin-bottom: 12px;
-            background-color: var(--neutral-100);
-            border: 1px solid var(--neutral-200);
-            border-left: 3px solid var(--neutral-400);
-            border-radius: var(--radius-sm);
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 3px solid #dee2e6;
+            border-radius: var(--radius-md);
             transition: all var(--transition-fast);
         }
         
         .unit-card:hover {
-            border-left-width: 4px;
-            box-shadow: var(--shadow-sm);
+            border-left-color: #ced4da;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         
         .unit-card:last-child {
@@ -240,9 +260,9 @@
         }
         
         .unit-card-new {
-            border-left-color: var(--status-new);
-            background-color: var(--status-new-bg);
-            border-color: #c8e6c9;
+            border-left-color: #00b894;
+            border-left-width: 4px;
+            background-color: #E8F5E9;
         }
         
         .unit-header {
@@ -256,26 +276,27 @@
         .unit-number {
             font-weight: 600;
             font-size: 13px;
-            color: var(--neutral-700);
+            color: #343a40;
             order: 2;
         }
         
         .unit-badge-new {
             display: inline-block;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: var(--radius-sm);
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
-            background-color: var(--status-new);
-            color: var(--status-new-dark);
+            background-color: transparent;
+            color: #00b894;
             letter-spacing: 0.5px;
             order: 3;
+            border: 1.5px solid #00b894;
         }
         
         .unit-rent {
             font-size: 24px;
-            color: var(--accent-600);
+            color: #212529;
             font-weight: 700;
             margin-bottom: 8px;
             line-height: 1;
@@ -283,18 +304,21 @@
         
         .unit-details {
             font-size: 14px;
-            color: var(--neutral-600);
-            margin-bottom: 10px;
+            color: #495057;
+            margin-bottom: 4px;
             line-height: 1.4;
+            font-weight: 500;
         }
         
         .unit-info-row {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 13px;
-            color: var(--neutral-700);
-            margin-bottom: 6px;
+            gap: 16px;
+            font-size: 12px;
+            color: #495057;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
             flex-wrap: wrap;
         }
         
@@ -306,44 +330,37 @@
         
         .unit-source {
             font-size: 11px;
-            color: var(--neutral-500);
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid var(--neutral-200);
+            color: #6c757d;
+            margin-top: 12px;
         }
         
-        .unit-contact-info {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--neutral-200);
-        }
         
         .unit-contact {
             font-size: 12px;
-            color: var(--accent-600);
+            color: #00796B;
             font-weight: 500;
         }
         
         .unit-contact a {
-            color: var(--accent-600);
+            color: #00796B;
             text-decoration: none;
             transition: color var(--transition-fast);
         }
         
         .unit-contact a:hover {
-            color: var(--accent-500);
+            color: #00b894;
             text-decoration: underline;
         }
         
         .unit-contact-name {
             font-size: 12px;
-            color: var(--neutral-700);
+            color: #343a40;
             font-weight: 500;
         }
         
         .unit-keys {
             font-size: 11px;
-            color: var(--neutral-600);
+            color: #495057;
             margin-top: 4px;
         }
         
@@ -353,7 +370,7 @@
             align-items: center;
             gap: 6px;
             font-size: 11px;
-            color: var(--neutral-600);
+            color: #495057;
             cursor: pointer;
             user-select: none;
             padding: 4px 8px;
@@ -363,27 +380,27 @@
         }
         
         .visited-checkbox-label:hover {
-            background-color: var(--neutral-100);
+            background-color: #f1f3f5;
         }
         
         .visited-checkbox {
             width: 16px;
             height: 16px;
             cursor: pointer;
-            accent-color: var(--accent-600);
+            accent-color: #00796B;
             margin: 0;
         }
         
         .checkbox-text {
             font-size: 11px;
             font-weight: 500;
-            color: var(--neutral-600);
+            color: #495057;
         }
         
         /* Dim visited units */
         .unit-visited {
             opacity: 0.6;
-            background-color: var(--neutral-50);
+            background-color: #f8f9fa;
         }
         
         .unit-visited:hover {
@@ -496,8 +513,8 @@
         /* Popup footer */
         .popup-footer {
             padding: 12px 18px;
-            background: var(--neutral-50);
-            border-top: 1px solid var(--neutral-200);
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
             flex-shrink: 0;
             text-align: center;
         }
@@ -537,6 +554,14 @@
             box-shadow: var(--shadow-md);
             z-index: 10;
             transition: transform var(--transition-base);
+            border-bottom: 1px solid var(--neutral-200);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-bar {
+                border-bottom: 1px solid rgba(157, 141, 247, 0.3);
+                background: linear-gradient(to bottom, var(--neutral-50) 0%, var(--neutral-50) 95%, rgba(157, 141, 247, 0.05) 100%);
+            }
         }
         
         .filter-bar.collapsed {
@@ -592,6 +617,18 @@
             white-space: nowrap;
         }
         
+        .price-separator {
+            color: var(--neutral-500);
+            font-weight: 500;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .price-separator {
+                color: #b0b0d0;
+                font-weight: 600;
+            }
+        }
+        
         .filter-input {
             padding: 6px 12px;
             border: 2px solid var(--neutral-300);
@@ -606,6 +643,12 @@
         
         .filter-input::placeholder {
             color: var(--neutral-500);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-input::placeholder {
+                color: #a0a0c0;
+            }
         }
         
         .filter-input:focus {
@@ -699,6 +742,19 @@
             border-color: var(--neutral-400);
         }
         
+        @media (prefers-color-scheme: dark) {
+            .filter-clear-btn {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: #6a6a8a;
+                color: var(--neutral-700);
+            }
+            
+            .filter-clear-btn:hover {
+                background: rgba(255, 255, 255, 0.12);
+                border-color: #7a7a9a;
+            }
+        }
+        
         .filter-results-count {
             font-size: 13px;
             color: var(--neutral-600);
@@ -706,6 +762,14 @@
             padding: 4px 12px;
             background: var(--neutral-100);
             border-radius: var(--radius-sm);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .filter-results-count {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--neutral-700);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
         }
         
         /* ============================================================
@@ -779,6 +843,29 @@
                 gap: 8px;
             }
             
+            /* Keep price fields side-by-side on mobile */
+            .filter-group.price-group {
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .filter-group.price-group .filter-label {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            
+            .filter-group.price-group .filter-input.small {
+                flex: 1;
+                min-width: 80px;
+                max-width: 45%;
+            }
+            
+            .filter-group.price-group .price-separator {
+                flex-shrink: 0;
+            }
+            
             .filter-label {
                 font-size: 14px;
             }
@@ -791,8 +878,13 @@
                 font-size: 16px; /* Prevents iOS zoom */
             }
             
+            /* Override for price inputs - keep them side-by-side */
             .filter-input.small {
                 width: 100%;
+            }
+            
+            .filter-group.price-group .filter-input.small {
+                width: auto;
             }
             
             .filter-clear-btn {
@@ -1130,10 +1222,10 @@
     
     <div class="filter-bar collapsed" id="filter-bar">
         <div class="filter-content">
-            <div class="filter-group">
+            <div class="filter-group price-group">
                 <label class="filter-label">Price:</label>
                 <input type="number" id="filter-price-min" class="filter-input small" placeholder="Min" min="0" step="100">
-                <span style="color: var(--neutral-500);">–</span>
+                <span class="price-separator">–</span>
                 <input type="number" id="filter-price-max" class="filter-input small" placeholder="Max" min="0" step="100">
             </div>
             
