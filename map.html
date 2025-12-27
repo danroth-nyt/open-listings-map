@@ -1252,7 +1252,7 @@
     
     <!-- Filter Bar -->
     <button class="filter-toggle" onclick="toggleFilters()">
-        ▼ Filters
+        ▲ Filters
     </button>
     
     <div class="filter-bar collapsed" id="filter-bar">
@@ -1675,10 +1675,12 @@
             mapElement.classList.toggle('with-filters');
             
             // Update toggle text
+            // Collapsed = closed (show up arrow to open upward on mobile)
+            // Not collapsed = open (show down arrow to close downward on mobile)
             if (filterBar.classList.contains('collapsed')) {
-                filterToggle.textContent = '▼ Filters';
-            } else {
                 filterToggle.textContent = '▲ Filters';
+            } else {
+                filterToggle.textContent = '▼ Filters';
             }
         }
         
